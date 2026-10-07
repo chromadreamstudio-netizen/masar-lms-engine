@@ -79,14 +79,14 @@ export default function GlobalPlatformHome() {
               </button>
 
               <Link 
-                href="/learn/demo" 
+                href="/login" 
                 className="bg-[#391e75] hover:bg-[#2d175e] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all border border-purple-500/30"
               >
                 تسجيل الدخول
               </Link>
 
               <Link 
-                href="/learn/demo" 
+                href="/login" 
                 className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#00a88f]/20 flex items-center gap-1.5"
               >
                 <Zap size={15} />
@@ -124,7 +124,7 @@ export default function GlobalPlatformHome() {
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-4 mb-10">
                 <Link 
-                  href="/learn/demo" 
+                  href="/login" 
                   className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all shadow-xl shadow-[#00a88f]/25 flex items-center gap-3 hover:-translate-y-0.5"
                 >
                   <PlayCircle size={22} />
@@ -323,7 +323,7 @@ export default function GlobalPlatformHome() {
                 </ul>
               </div>
 
-              <Link href="/learn/demo" className="w-full bg-[#00a88f] hover:bg-[#008f7a] text-white font-extrabold text-xs py-4 rounded-xl text-center block transition-all shadow-lg shadow-[#00a88f]/30">
+              <Link href="/login" className="w-full bg-[#00a88f] hover:bg-[#008f7a] text-white font-extrabold text-xs py-4 rounded-xl text-center block transition-all shadow-lg shadow-[#00a88f]/30">
                 اشترك الآن وابدأ التجربة
               </Link>
             </div>
