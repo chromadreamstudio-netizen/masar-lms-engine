@@ -6,12 +6,11 @@ import {
   Search, ShoppingCart, Globe, Sparkles, Star, Users, 
   CheckCircle2, ArrowRight, PlayCircle, ShieldCheck, 
   BrainCircuit, Award, Building2, Zap, BookOpen, 
-  ChevronDown, Layers, HelpCircle, ArrowUpRight, Check
+  ChevronDown, Layers, HelpCircle, ArrowUpRight, Check, UserPlus, LogIn
 } from 'lucide-react';
 
 export default function GlobalPlatformHome() {
   const [pricingPeriod, setPricingPeriod] = useState<'monthly' | 'yearly'>('yearly');
-  const [activeCategory, setActiveCategory] = useState('all');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans dir-rtl selection:bg-[#00a88f] selection:text-white">
@@ -26,7 +25,7 @@ export default function GlobalPlatformHome() {
         <Link href="#pricing" className="underline hover:text-amber-200 transition-colors mr-2">استكشف الخطط ←</Link>
       </div>
 
-      {/* 2. Udemy-Style Mega Navbar */}
+      {/* 2. Mega Navbar */}
       <header className="bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20 gap-4">
@@ -59,15 +58,11 @@ export default function GlobalPlatformHome() {
               <Search size={18} className="absolute right-4 top-3 text-slate-500" />
             </div>
 
-            {/* Right Actions & Monetization Links */}
+            {/* Right Actions & Auth Links */}
             <div className="flex items-center gap-3 shrink-0">
               <Link href="#b2b" className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-[#00a88f] transition-colors">
                 <Building2 size={16} className="text-[#00a88f]" />
                 <span>مسار للشركات (B2B)</span>
-              </Link>
-
-              <Link href="/teach" className="hidden lg:flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors">
-                <span>درّس معنا</span>
               </Link>
 
               <div className="h-6 w-[1px] bg-slate-800 hidden lg:block"></div>
@@ -78,19 +73,22 @@ export default function GlobalPlatformHome() {
                 <span className="absolute -top-1 -right-1 bg-[#00a88f] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
               </button>
 
+              {/* زر تسجيل الدخول */}
               <Link 
                 href="/login" 
-                className="bg-[#391e75] hover:bg-[#2d175e] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all border border-purple-500/30"
+                className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all border border-slate-700 flex items-center gap-1.5"
               >
-                تسجيل الدخول
+                <LogIn size={15} className="text-purple-400" />
+                <span>تسجيل الدخول</span>
               </Link>
 
+              {/* زر إنشاء حساب جديد */}
               <Link 
                 href="/login" 
                 className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#00a88f]/20 flex items-center gap-1.5"
               >
-                <Zap size={15} />
-                <span>تجربة المنصة حياً</span>
+                <UserPlus size={15} />
+                <span>حساب جديد</span>
               </Link>
             </div>
 
@@ -98,7 +96,7 @@ export default function GlobalPlatformHome() {
         </div>
       </header>
 
-      {/* 3. Hero Section (Udemy + SaaS Hybrid) */}
+      {/* 3. Hero Section */}
       <section className="relative py-20 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -118,7 +116,7 @@ export default function GlobalPlatformHome() {
               </h1>
 
               <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-8 max-w-2xl">
-                احصل على وصول فردي للكورسات، أو اشترك في الباقة السنوية الشاملة، أو زوّد مؤسستك ببيئة تدريبية متكاملة لفرق العمل مع معلم ذكي مرافق لكل درس شهادات معتمدة مشفرة.
+                احصل على وصول فردي للكورسات، أو اشترك في الباقة السنوية الشاملة، أو زوّد مؤسستك ببيئة تدريبية متكاملة لفرق العمل مع معلم ذكي مرافق لكل درس وشهادات معتمدة مشفرة.
               </p>
 
               {/* Action Buttons */}
@@ -127,16 +125,17 @@ export default function GlobalPlatformHome() {
                   href="/login" 
                   className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all shadow-xl shadow-[#00a88f]/25 flex items-center gap-3 hover:-translate-y-0.5"
                 >
-                  <PlayCircle size={22} />
-                  <span>دخول المشغّل والمعلم الذكي</span>
+                  <UserPlus size={20} />
+                  <span>أنشئ حسابك وابدأ الآن</span>
                 </Link>
 
-                <a 
-                  href="#pricing" 
-                  className="bg-slate-900 border border-slate-700 hover:border-slate-500 text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all flex items-center gap-2"
+                <Link 
+                  href="/login" 
+                  className="bg-[#391e75] border border-purple-500/30 hover:bg-[#2d175e] text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all flex items-center gap-2"
                 >
-                  <span>استكشف خطط الاشتراكات (SaaS)</span>
-                </a>
+                  <LogIn size={20} className="text-[#00a88f]" />
+                  <span>دخول المنصة والمعلم الذكي</span>
+                </Link>
               </div>
 
               {/* Trust Metrics */}
@@ -202,7 +201,7 @@ export default function GlobalPlatformHome() {
         </div>
       </section>
 
-      {/* 5. Deep Category Taxonomy (Udemy Style) */}
+      {/* 5. Deep Category Taxonomy */}
       <section className="py-16 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -210,7 +209,7 @@ export default function GlobalPlatformHome() {
               <h2 className="text-2xl md:text-3xl font-black text-white">استكشف الأقسام والتخصصات</h2>
               <p className="text-xs text-slate-400 mt-1">مسارات تعليمية مصممة لتغطية متطلبات سوق العمل العالمي</p>
             </div>
-            <Link href="/courses" className="text-xs font-bold text-[#00a88f] hover:underline flex items-center gap-1">
+            <Link href="/login" className="text-xs font-bold text-[#00a88f] hover:underline flex items-center gap-1">
               جميع الأقسام <ArrowRight size={14} />
             </Link>
           </div>
@@ -224,20 +223,21 @@ export default function GlobalPlatformHome() {
               { name: 'التصميم والتجربة', count: '38 كورس', icon: Layers },
               { name: 'الشهادات المعتمدة', count: '29 مسار', icon: Award },
             ].map((cat, idx) => (
-              <div 
+              <Link 
                 key={idx} 
-                className="p-5 bg-slate-900 border border-slate-800 rounded-2xl hover:border-[#00a88f] hover:bg-slate-800/80 cursor-pointer transition-all group"
+                href="/login"
+                className="p-5 bg-slate-900 border border-slate-800 rounded-2xl hover:border-[#00a88f] hover:bg-slate-800/80 cursor-pointer transition-all group block"
               >
                 <cat.icon className="text-[#00a88f] mb-3 group-hover:scale-110 transition-transform" size={28} />
                 <h3 className="font-bold text-sm text-white mb-1">{cat.name}</h3>
                 <span className="text-[11px] text-slate-500 block">{cat.count}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 6. Comprehensive Monetization & Pricing Section (SaaS + Individual + B2B) */}
+      {/* 6. Pricing Section */}
       <section id="pricing" className="py-20 bg-slate-900/30 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
@@ -248,7 +248,6 @@ export default function GlobalPlatformHome() {
               نوفر لك حرية الاختيار بين شراء كورس فردي لمرة واحدة، أو الاشتراك في خطة التعلم المفتوحة، أو حلول المؤسسات B2B.
             </p>
 
-            {/* Toggle Billing Period */}
             <div className="inline-flex items-center gap-3 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 mt-8">
               <button
                 onClick={() => setPricingPeriod('monthly')}
@@ -270,10 +269,9 @@ export default function GlobalPlatformHome() {
             </div>
           </div>
 
-          {/* Pricing Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
             
-            {/* Model 1: Individual Course Sale */}
+            {/* Individual Course */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col justify-between hover:border-slate-700 transition-all">
               <div>
                 <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-2">البيع المباشر</span>
@@ -293,12 +291,12 @@ export default function GlobalPlatformHome() {
                 </ul>
               </div>
 
-              <Link href="/courses" className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3.5 rounded-xl text-center block transition-colors">
-                استكشف الكورسات الفردية
+              <Link href="/login" className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3.5 rounded-xl text-center block transition-colors">
+                سجّل وابدأ الشراء
               </Link>
             </div>
 
-            {/* Model 2: SaaS Subscription (Personal Plan) - FEATURED */}
+            {/* Featured SaaS Subscription */}
             <div className="bg-gradient-to-b from-[#391e75]/40 via-slate-900 to-slate-900 border-2 border-[#00a88f] rounded-3xl p-8 flex flex-col justify-between shadow-2xl relative">
               <div className="absolute -top-4 right-1/2 translate-x-1/2 bg-[#00a88f] text-white text-[11px] font-black px-4 py-1 rounded-full shadow-lg">
                 الأكثر إقبالاً (PERSONAL PLAN)
@@ -328,7 +326,7 @@ export default function GlobalPlatformHome() {
               </Link>
             </div>
 
-            {/* Model 3: B2B Enterprise Seats */}
+            {/* B2B Enterprise Seats */}
             <div id="b2b" className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col justify-between hover:border-slate-700 transition-all">
               <div>
                 <span className="text-xs font-extrabold text-purple-400 uppercase tracking-wider block mb-2">قطاع الشركات والمدارس</span>
@@ -348,8 +346,8 @@ export default function GlobalPlatformHome() {
                 </ul>
               </div>
 
-              <Link href="/b2b-contact" className="w-full bg-[#391e75] hover:bg-[#2d175e] text-white font-bold text-xs py-3.5 rounded-xl text-center block transition-colors">
-                طلب عرض سعر للمؤسسة
+              <Link href="/login" className="w-full bg-[#391e75] hover:bg-[#2d175e] text-white font-bold text-xs py-3.5 rounded-xl text-center block transition-colors">
+                تسجيل المؤسسة وطلب عرض
               </Link>
             </div>
 
@@ -357,7 +355,7 @@ export default function GlobalPlatformHome() {
         </div>
       </section>
 
-      {/* 7. Verified Certificate System Highlight */}
+      {/* 7. Certificate System */}
       <section className="py-20 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -382,7 +380,6 @@ export default function GlobalPlatformHome() {
                 <h4 className="font-extrabold text-white text-base mb-1">شهادة إتمام معتمدة</h4>
                 <p className="text-[11px] text-slate-500 mb-4">المعرف الرقمي: MSR-2026-8894</p>
                 <div className="bg-white p-3 rounded-xl inline-block mb-3">
-                  {/* QR Code Placeholder */}
                   <div className="w-28 h-28 bg-slate-900 rounded flex items-center justify-center text-[10px] text-slate-400 font-mono">
                     QR VERIFIED
                   </div>
@@ -413,30 +410,30 @@ export default function GlobalPlatformHome() {
             <div>
               <h4 className="font-bold text-white mb-4 text-sm">عن المنصة</h4>
               <ul className="space-y-2.5">
-                <li><a href="#" className="hover:text-white transition-colors">من نحن</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">خطط الاشتراكات</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">مسار للشركات (B2B)</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">درّس معنا</a></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">من نحن</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition-colors">خطط الاشتراكات</Link></li>
+                <li><Link href="#b2b" className="hover:text-white transition-colors">مسار للشركات (B2B)</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">درّس معنا</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold text-white mb-4 text-sm">المسارات</h4>
               <ul className="space-y-2.5">
-                <li><a href="#" className="hover:text-white transition-colors">الذكاء الاصطناعي</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">تطوير البرمجيات</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">إدارة الأعمال</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">الشهادات المعتمدة</a></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">الذكاء الاصطناعي</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">تطوير البرمجيات</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">إدارة الأعمال</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">الشهادات المعتمدة</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold text-white mb-4 text-sm">الدعم والتحقق</h4>
               <ul className="space-y-2.5">
-                <li><a href="#" className="hover:text-white transition-colors">التحقق من الشهادات</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">مركز المساعدة</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">الشروط والأحكام</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">سياسة الخصوصية</a></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">التحقق من الشهادات</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">مركز المساعدة</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">الشروط والأحكام</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">سياسة الخصوصية</Link></li>
               </ul>
             </div>
 
