@@ -21,7 +21,7 @@ export default function GlobalPlatformHome() {
         <span className="bg-white/20 px-2 py-0.5 rounded-full text-[11px] uppercase tracking-wider font-bold">جديد</span>
         <span className="flex items-center gap-1.5">
           <Sparkles size={15} className="text-amber-300 animate-pulse" />
-          طلقنا خطط اشتراكات قطاع الأعمال (B2B) والمعلم الذكي المدعوم بـ Gemini 3.6
+          أطلقنا خطط اشتراكات قطاع الأعمال (B2B) والمعلم الذكي المدعوم بـ Gemini 3.6
         </span>
         <Link href="#pricing" className="underline hover:text-amber-200 transition-colors mr-2">استكشف الخطط ←</Link>
       </div>
@@ -34,10 +34,10 @@ export default function GlobalPlatformHome() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
               <div className="w-11 h-11 bg-gradient-to-tr from-[#391e75] to-[#00a88f] rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-[#00a88f]/20 border border-white/10">
-                N
+                M
               </div>
               <div>
-                <span className="font-black text-2xl tracking-tight text-white block leading-none">منصة نماء العالمية</span>
+                <span className="font-black text-2xl tracking-tight text-white block leading-none">منصة مسار العالمية</span>
                 <span className="text-[10px] text-[#00a88f] font-bold tracking-widest uppercase">Enterprise EdTech SaaS</span>
               </div>
             </Link>
@@ -63,7 +63,7 @@ export default function GlobalPlatformHome() {
             <div className="flex items-center gap-3 shrink-0">
               <Link href="#b2b" className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-[#00a88f] transition-colors">
                 <Building2 size={16} className="text-[#00a88f]" />
-                <span>نماء للشركات (B2B)</span>
+                <span>مسار للشركات (B2B)</span>
               </Link>
 
               <Link href="/teach" className="hidden lg:flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors">
@@ -173,7 +173,7 @@ export default function GlobalPlatformHome() {
 
                 <div className="mt-4 p-4 bg-slate-950/80 rounded-2xl border border-slate-800/80">
                   <div className="flex items-center gap-2 text-xs font-bold text-[#00a88f] mb-2">
-                    <BrainCircuit size={16} /> المعلم الذكي (نماء AI)
+                    <BrainCircuit size={16} /> المعلم الذكي (مسار AI)
                   </div>
                   <p className="text-xs text-slate-300 leading-normal">
                     "أنا متصل بسياق الفيديو، اسألني في أي وقت أثناء مشاهدة المنهج وسأقوم بالشرح والتحليل فورياً!"
@@ -194,7 +194,7 @@ export default function GlobalPlatformHome() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all">
             <span className="font-black text-xl text-slate-400">Vodafone</span>
-            <span className="font-black text-xl text-slate-400">Namaa Center</span>
+            <span className="font-black text-xl text-slate-400">MASAR Center</span>
             <span className="font-black text-xl text-slate-400">Global Tech</span>
             <span className="font-black text-xl text-slate-400">EduAcademy</span>
             <span className="font-black text-xl text-slate-400">SaaS Systems</span>
@@ -380,7 +380,7 @@ export default function GlobalPlatformHome() {
                   <Award size={32} />
                 </div>
                 <h4 className="font-extrabold text-white text-base mb-1">شهادة إتمام معتمدة</h4>
-                <p className="text-[11px] text-slate-500 mb-4">المعرف الرقمي: NMA-2026-8894</p>
+                <p className="text-[11px] text-slate-500 mb-4">المعرف الرقمي: MSR-2026-8894</p>
                 <div className="bg-white p-3 rounded-xl inline-block mb-3">
                   {/* QR Code Placeholder */}
                   <div className="w-28 h-28 bg-slate-900 rounded flex items-center justify-center text-[10px] text-slate-400 font-mono">
@@ -402,8 +402,8 @@ export default function GlobalPlatformHome() {
             
             <div className="col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-[#00a88f] rounded-xl flex items-center justify-center text-white font-black">N</div>
-                <span className="font-black text-lg text-white">منصة نماء العالمية</span>
+                <div className="w-8 h-8 bg-[#00a88f] rounded-xl flex items-center justify-center text-white font-black">M</div>
+                <span className="font-black text-lg text-white">منصة مسار العالمية</span>
               </div>
               <p className="text-slate-500 leading-relaxed max-w-sm mb-4">
                 الجيل الجديد من منصات التعليم الذكي المرتكزة على المعلم الاصطناعي، حماية الفيديوهات المتقدمة، واشتراكات الأفراد والشركات.
@@ -415,7 +415,7 @@ export default function GlobalPlatformHome() {
               <ul className="space-y-2.5">
                 <li><a href="#" className="hover:text-white transition-colors">من نحن</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">خطط الاشتراكات</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">نماء للشركات (B2B)</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">مسار للشركات (B2B)</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">درّس معنا</a></li>
               </ul>
             </div>
@@ -443,7 +443,7 @@ export default function GlobalPlatformHome() {
           </div>
 
           <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-600">
-            <p>جميع الحقوق محفوظة © 2026 — منصة نماء للتعليم الرقمي وحلول الـ SaaS</p>
+            <p>جميع الحقوق محفوظة © 2026 — منصة مسار للتعليم الرقمي وحلول الـ SaaS</p>
             <div className="flex gap-6">
               <span>Stripe & Iyzico Encrypted</span>
               <span>Bunny.net DRM Protected</span>
