@@ -14,7 +14,7 @@
     "@ai-sdk/react": "^4.0.131",
     "@stripe/stripe-js": "^10.0.0",
     "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.117.2",
+    "@supabase/supabase-js": "^2.117.3",
     "ai": "^7.0.128",
     "clsx": "^2.1.1",
     "lucide-react": "^1.52.0",
