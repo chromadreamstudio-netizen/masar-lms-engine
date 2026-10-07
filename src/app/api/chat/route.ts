@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Direct Gemini API Call using gemini-3.6-flash
+    // Direct Gemini API Call
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
       {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
               role: 'user',
               parts: [
                 {
-                  text: `أنت معلم ذكي وخبير في أكاديمية مسار التعليمية. أجب على السؤال التالي بأسلوب مشجع ومختصر باللغة العربية:\n\n${lastUserMessage}`
+                  text: `أنت معلم ذكي وخبير في منصة مسار العالمية (MASAR Platform). أجب على السؤال التالي بأسلوب مشجع ومختصر باللغة العربية:\n\n${lastUserMessage}`
                 }
               ]
             }
