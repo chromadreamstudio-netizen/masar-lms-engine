@@ -19,13 +19,7 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // قراءة الوجهة المطلوبة من الـ URL، أو الاعتماد على لوحة التحكم كوجهة افتراضية
   const redirectTarget = searchParams.get('redirect') || '/dashboard';
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +27,19 @@ function AuthForm() {
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setErrorMsg('تنبيه: متغيرات البيئة الخاصة بـ Supabase غير معرفة في ملف .env.local');
+      setLoading(false);
+      return;
+    }
+
+    const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+
     try {
       if (isSignUp) {
-        // --- 1. عملية إنشاء حساب جديد (Signup) ---
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -49,7 +53,6 @@ function AuthForm() {
 
         if (error) throw error;
 
-        // تسجيل البيانات بشكل آمن في جدول contacts دون إيقاف العملية عند وجود قيود
         if (data.user) {
           try {
             await supabase.from('contacts').insert([
@@ -62,20 +65,18 @@ function AuthForm() {
               },
             ]);
           } catch (contactErr) {
-            console.warn('تنبيه: لم يتم حفظ جهة الاتصال في جدول contacts:', contactErr);
+            console.warn('تنبيه: لم يتم الحفظ في contacts:', contactErr);
           }
         }
 
-        // التوجيه إذا تم إنشاء الجلسة فوراً (Confirm Email غير مفعّل)
         if (data.session) {
           router.push(redirectTarget);
           router.refresh();
         } else {
-          setSuccessMsg('تم إنشاء الحساب بنجاح! إذا كان تأكيد البريد مفعلاً، يرجى مراجعة بريدك الإلكتروني لإنهاء التفعيل، أو يمكنك تسجيل الدخول الآن.');
+          setSuccessMsg('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول عبر تبويب تسجيل الدخول.');
           setIsSignUp(false);
         }
       } else {
-        // --- 2. عملية تسجيل الدخول (Sign In) ---
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -83,7 +84,6 @@ function AuthForm() {
 
         if (error) throw error;
 
-        // التوجيه الديناميكي للجهة المستهدفة
         router.push(redirectTarget);
         router.refresh();
       }
@@ -97,11 +97,9 @@ function AuthForm() {
   return (
     <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
       
-      {/* خلفية جمالية */}
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00a88f]/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#391e75]/30 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* الشعار والهيدر */}
       <div className="text-center mb-8">
         <Link href="/" className="inline-flex items-center gap-3 mb-3">
           <div className="w-12 h-12 bg-gradient-to-tr from-[#391e75] to-[#00a88f] rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg border border-white/10">
@@ -116,12 +114,11 @@ function AuthForm() {
         </p>
       </div>
 
-      {/* أزرار التبديل بين الدخول والتسجيل */}
       <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 mb-6">
         <button
           type="button"
           onClick={() => { setIsSignUp(false); setErrorMsg(null); setSuccessMsg(null); }}
-          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
+          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             !isSignUp ? 'bg-[#391e75] text-white shadow-md' : 'text-slate-400 hover:text-white'
           }`}
         >
@@ -130,7 +127,7 @@ function AuthForm() {
         <button
           type="button"
           onClick={() => { setIsSignUp(true); setErrorMsg(null); setSuccessMsg(null); }}
-          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             isSignUp ? 'bg-[#00a88f] text-white shadow-md' : 'text-slate-400 hover:text-white'
           }`}
         >
@@ -139,7 +136,6 @@ function AuthForm() {
         </button>
       </div>
 
-      {/* رسائل التنبيه والخطأ */}
       {errorMsg && (
         <div className="mb-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs text-center font-medium">
           {errorMsg}
@@ -153,9 +149,7 @@ function AuthForm() {
         </div>
       )}
 
-      {/* نموذج الإدخال */}
       <form onSubmit={handleAuth} className="space-y-4">
-        
         {isSignUp && (
           <>
             <div>
@@ -166,7 +160,7 @@ function AuthForm() {
                   required={isSignUp}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="وليد طه"
+                  placeholder="الاسم الكامل"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pr-10 pl-4 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#00a88f] transition-all"
                 />
                 <User size={16} className="absolute right-3 top-3.5 text-slate-500" />
@@ -223,7 +217,7 @@ function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-3.5 rounded-xl font-extrabold text-xs text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
+          className={`w-full py-3.5 rounded-xl font-extrabold text-xs text-white transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${
             isSignUp 
               ? 'bg-[#00a88f] hover:bg-[#008f7a] shadow-[#00a88f]/20' 
               : 'bg-[#391e75] hover:bg-[#2d175e] shadow-purple-950/50'
@@ -232,7 +226,7 @@ function AuthForm() {
           {loading && <Loader2 size={16} className="animate-spin" />}
           <span>
             {loading 
-              ? 'جاري التحقق والتقييد...' 
+              ? 'جاري التحقق...' 
               : isSignUp 
                 ? 'إنشاء حساب جديد والبدء' 
                 : 'دخول المنصة'}
@@ -246,19 +240,17 @@ function AuthForm() {
           <span>العودة لصفحة الهبوط الرئيسية</span>
         </Link>
       </div>
-
     </div>
   );
 }
 
-// التغليف النهائي بـ Suspense للتوافق مع Next.js App Router
 export default function AuthPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans dir-rtl">
       <Suspense fallback={
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <Loader2 size={18} className="animate-spin text-[#00a88f]" />
-          <span>جاري تحميل واجهة المصادقة...</span>
+          <span>جاري التحميل...</span>
         </div>
       }>
         <AuthForm />
