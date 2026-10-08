@@ -56,20 +56,20 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // إذا حاول المستخدم الدخول لمسار التعليم (/learn) وهو غير مسجل دخول، حوله لصفحة الدخول
-  if (request.nextUrl.pathname.startsWith('/learn') && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // 1. حماية مسارات التعليم ولوحة التحكم (إذا لم يكن مسجلاً، اذهب لصفحة الدخول)
+  if ((request.nextUrl.pathname.startsWith('/learn') || request.nextUrl.pathname.startsWith('/dashboard')) && !user) {
+    return NextResponse.redirect(new URL('/login?redirect=' + request.nextUrl.pathname, request.url))
   }
 
-  // إذا كان مسجل دخول وحاول فتح صفحة الدخول، حوله مباشرة للوحة التعليم
+  // 2. إذا كان مسجلاً للدخول وحاول فتح صفحة الدخول، حوله مباشرة للوحة التحكم
   if (request.nextUrl.pathname === '/login' && user) {
-    return NextResponse.redirect(new URL('/learn/demo', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response
 }
 
-// تحديد المسارات التي يعمل عليها الـ Middleware
+// تحديد المسارات التي يعمل عليها الـ Middleware (تمت إضافة لوحة التحكم)
 export const config = {
-  matcher: ['/learn/:path*', '/login'],
+  matcher: ['/learn/:path*', '/dashboard/:path*', '/login'],
 }
