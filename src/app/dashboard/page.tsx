@@ -7,7 +7,8 @@ import { BookOpen, CheckCircle, Clock, PlayCircle, Award, LayoutDashboard } from
 export const revalidate = 0; // إلغاء التخزين المؤقت لجلب أحدث البيانات دائماً
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
+  // التعديل تم هنا: إضافة await
+  const cookieStore = await cookies();
 
   // 1. إنشاء عميل Supabase على جانب الخادم
   const supabase = createServerClient(
