@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { 
   PlayCircle, CheckCircle2, BrainCircuit, MonitorPlay, 
-  Infinity, Trophy, ChevronRight, ShoppingCart, Zap 
+  Trophy, ChevronRight, ShoppingCart, Zap 
 } from 'lucide-react';
 
 export const revalidate = 0;
@@ -100,7 +100,6 @@ export default async function CourseSalesPage({ params }: { params: { slug: stri
                 </div>
 
                 <div className="space-y-3">
-                  {/* أزرار الدفع (سيتم ربطها بـ Lemon Squeezy لاحقاً) */}
                   <button className="w-full bg-[#00a88f] hover:bg-[#008f7a] text-white py-4 rounded-xl font-bold text-sm transition-all shadow-lg shadow-[#00a88f]/20 flex items-center justify-center gap-2">
                     <ShoppingCart size={18} />
                     شراء الكورس الآن
@@ -147,4 +146,22 @@ export default async function CourseSalesPage({ params }: { params: { slug: stri
                   <span className="text-sm text-slate-700">الحصول على دعم فوري من "المعلم الذكي" المدمج.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 size={20} className="text-[#00a88f] shrink-
+                  <CheckCircle2 size={20} className="text-[#00a88f] shrink-0 mt-0.5" />
+                  <span className="text-sm text-slate-700">تجهيزك لسوق العمل بشهادة معتمدة دولياً.</span>
+                </div>
+              </div>
+            </section>
+
+            {/* المنهج (Curriculum) */}
+            <section>
+              <h2 className="text-2xl font-black mb-6">منهج الكورس</h2>
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                {sortedModules.length > 0 ? sortedModules.map((module: any, idx: number) => (
+                  <div key={module.id} className="border-b border-slate-100 last:border-0">
+                    <div className="bg-slate-50 p-5 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors">
+                      <h3 className="font-bold text-slate-900 text-sm">{module.title}</h3>
+                      <span className="text-xs font-bold text-slate-500">{module.lessons?.length || 0} دروس</span>
+                    </div>
+                    <div className="p-2">
+                      {module.lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => (
+                        <div key={lesson.
