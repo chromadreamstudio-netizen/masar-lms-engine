@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { 
-  Search, ShoppingCart, Sparkles, Users, 
-  CheckCircle2, ArrowRight, PlayCircle, BrainCircuit, 
-  Building2, BookOpen, ChevronDown, Layers, UserPlus, LogIn, LogOut, LayoutDashboard, ArrowUpRight
+  Search, ShoppingCart, Sparkles, 
+  ArrowRight, PlayCircle, BrainCircuit, 
+  Building2, BookOpen, ChevronDown, Layers, UserPlus, LogIn, LogOut, LayoutDashboard 
 } from 'lucide-react';
 
 export default function GlobalPlatformHome() {
@@ -22,14 +22,12 @@ export default function GlobalPlatformHome() {
   );
 
   useEffect(() => {
-    // 1. التحقق من حالة المستخدم
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
     };
     checkUser();
 
-    // 2. جلب الكورسات المنشورة لعرضها في الرئيسية (UX حي وديناميكي)
     const fetchPublishedCourses = async () => {
       const { data } = await supabase
         .from('courses')
@@ -59,7 +57,6 @@ export default function GlobalPlatformHome() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans dir-rtl selection:bg-[#00a88f] selection:text-white">
       
-      {/* الشريط العلوي الإعلاني */}
       <div className="bg-gradient-to-r from-[#391e75] via-[#2d175e] to-[#00a88f] text-white py-2 px-4 text-center text-xs md:text-sm font-semibold flex items-center justify-center gap-3 border-b border-white/10 shadow-md">
         <span className="bg-white/20 px-2 py-0.5 rounded-full text-[11px] uppercase tracking-wider font-bold">تحديث جديد</span>
         <span className="flex items-center gap-1.5">
@@ -68,7 +65,6 @@ export default function GlobalPlatformHome() {
         </span>
       </div>
 
-      {/* شريط التصفح الرئيسي */}
       <header className="bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20 gap-4">
@@ -146,7 +142,6 @@ export default function GlobalPlatformHome() {
         </div>
       </header>
 
-      {/* قسم البطل (Hero Section) */}
       <section className="relative py-20 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -242,7 +237,6 @@ export default function GlobalPlatformHome() {
         </div>
       </section>
 
-      {/* قسم الكورسات الديناميكي (يقرأ من قاعدة البيانات) */}
       <section id="courses" className="py-20 bg-slate-950 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -271,11 +265,12 @@ export default function GlobalPlatformHome() {
                     <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-3 flex-1">
                       {course.description}
                     </p>
+                    {/* التحديث هنا: توجيه المستخدم لصفحة المبيعات (courses) وليس المشغل (learn) */}
                     <Link 
-                      href={user ? `/learn/${course.slug}` : `/login?redirect=/learn/${course.slug}`}
+                      href={`/courses/${course.slug}`}
                       className="w-full bg-slate-800 hover:bg-[#00a88f] text-white py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 group/btn"
                     >
-                      <span>الذهاب للكورس</span>
+                      <span>استكشاف الكورس</span>
                       <ArrowRight size={14} className="group-hover/btn:-translate-x-1 transition-transform" />
                     </Link>
                   </div>
