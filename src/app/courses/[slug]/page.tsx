@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { 
   PlayCircle, CheckCircle2, BrainCircuit, MonitorPlay, 
@@ -52,10 +53,22 @@ export default async function CourseSalesPage({ params }: { params: { slug: stri
             
             {/* تفاصيل الكورس */}
             <div className="lg:col-span-8 z-10">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#00a88f] mb-4">
-                <Link href="/" className="hover:underline">الرئيسية</Link>
-                <ChevronRight size={14} />
-                <span>الكورسات</span>
+              
+              {/* الشعار ومسار التنقل (Breadcrumbs) */}
+              <div className="flex items-center gap-4 mb-6">
+                <Link href="/" className="shrink-0 bg-white p-2 rounded-xl">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Masar EdTech Logo" 
+                    width={100} 
+                    height={30} 
+                    className="object-contain"
+                  />
+                </Link>
+                <div className="flex items-center gap-2 text-xs font-bold text-[#00a88f]">
+                  <ChevronRight size={14} />
+                  <span>تفاصيل الكورس</span>
+                </div>
               </div>
               
               <h1 className="text-3xl md:text-5xl font-black leading-tight mb-4">{course.title}</h1>
@@ -134,47 +147,4 @@ export default async function CourseSalesPage({ params }: { params: { slug: stri
                   <span className="text-sm text-slate-700">الحصول على دعم فوري من "المعلم الذكي" المدمج.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 size={20} className="text-[#00a88f] shrink-0 mt-0.5" />
-                  <span className="text-sm text-slate-700">تجهيزك لسوق العمل بشهادة معتمدة دولياً.</span>
-                </div>
-              </div>
-            </section>
-
-            {/* المنهج (Curriculum) */}
-            <section>
-              <h2 className="text-2xl font-black mb-6">منهج الكورس</h2>
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                {sortedModules.length > 0 ? sortedModules.map((module: any, idx: number) => (
-                  <div key={module.id} className="border-b border-slate-100 last:border-0">
-                    <div className="bg-slate-50 p-5 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors">
-                      <h3 className="font-bold text-slate-900 text-sm">{module.title}</h3>
-                      <span className="text-xs font-bold text-slate-500">{module.lessons?.length || 0} دروس</span>
-                    </div>
-                    <div className="p-2">
-                      {module.lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => (
-                        <div key={lesson.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-colors">
-                          <div className="flex items-center gap-3">
-                            <MonitorPlay size={16} className={lesson.is_free_preview ? "text-[#00a88f]" : "text-slate-400"} />
-                            <span className={`text-sm ${lesson.is_free_preview ? 'text-[#00a88f] font-bold cursor-pointer hover:underline' : 'text-slate-700'}`}>
-                              {lesson.title}
-                            </span>
-                          </div>
-                          {lesson.is_free_preview && (
-                            <span className="text-[10px] bg-[#00a88f]/10 text-[#00a88f] px-2 py-1 rounded font-bold">معاينة مجانية</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )) : (
-                  <div className="p-8 text-center text-slate-500 text-sm">لم يتم إضافة فصول دراسية لهذا الكورس بعد.</div>
-                )}
-              </div>
-            </section>
-
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
+                  <CheckCircle2 size={20} className="text-[#00a88f] shrink-
