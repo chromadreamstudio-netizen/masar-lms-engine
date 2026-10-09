@@ -164,4 +164,29 @@ export default async function CourseSalesPage({ params }: { params: { slug: stri
                     </div>
                     <div className="p-2">
                       {module.lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => (
-                        <div key={lesson.
+                        <div key={lesson.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-colors">
+                          <div className="flex items-center gap-3">
+                            <MonitorPlay size={16} className={lesson.is_free_preview ? "text-[#00a88f]" : "text-slate-400"} />
+                            <span className={`text-sm ${lesson.is_free_preview ? 'text-[#00a88f] font-bold cursor-pointer hover:underline' : 'text-slate-700'}`}>
+                              {lesson.title}
+                            </span>
+                          </div>
+                          {lesson.is_free_preview && (
+                            <span className="text-[10px] bg-[#00a88f]/10 text-[#00a88f] px-2 py-1 rounded font-bold">معاينة مجانية</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="p-8 text-center text-slate-500 text-sm">لم يتم إضافة فصول دراسية لهذا الكورس بعد.</div>
+                )}
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
