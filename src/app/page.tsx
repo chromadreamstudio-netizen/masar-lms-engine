@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { 
   Search, PlayCircle, BookOpen, UserPlus, LogIn, LogOut, LayoutDashboard,
-  Star, Clock, Shield, MonitorPlay
+  Star, Clock, Shield, MonitorPlay, ArrowRight
 } from 'lucide-react';
 
 export default function GlobalPlatformHome() {
@@ -33,7 +33,7 @@ export default function GlobalPlatformHome() {
         .select('id, title, slug, description, price, instructor_id')
         .eq('is_published', true)
         .order('created_at', { ascending: false })
-        .limit(6); // زيادة العدد لملء الواجهة
+        .limit(6);
       
       if (data) setCourses(data);
       setIsLoadingCourses(false);
