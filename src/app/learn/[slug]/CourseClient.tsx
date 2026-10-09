@@ -9,6 +9,11 @@ import {
 
 export default function CourseClient({ course, progressMap }: { course: any, progressMap: Record<string, any> }) {
   const [activeTab, setActiveTab] = useState<'syllabus' | 'ai'>('syllabus');
+  
+  // تحديد الدرس الأول كدرس نشط افتراضياً
+  const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id || '';
+  const [activeLessonId, setActiveLessonId] = useState<string>(firstLessonId);
+  
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([
@@ -19,7 +24,6 @@ export default function CourseClient({ course, progressMap }: { course: any, pro
     }
   ]);
 
-  // دالة التعامل مع رسائل الذكاء الاصطناعي
   const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -47,12 +51,14 @@ export default function CourseClient({ course, progressMap }: { course: any, pro
     }
   };
 
-  const sortedModules = course.modules?.sort((a: any, b: any) => a.order_index - b.order_index) || [];
+  // النسخ الآمن للمصفوفات (لتجنب خطأ Hydration الذي يعطل الأزرار)
+  const sortedModules = course.modules 
+    ? [...course.modules].sort((a: any, b: any) => a.order_index - b.order_index) 
+    : [];
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden dir-rtl" dir="rtl">
       
-      {/* القسم الأيمن (الرئيسي): مشغل الفيديو */}
       <main className="flex-1 flex flex-col h-full overflow-y-auto relative scrollbar-hide">
         <header className="h-16 flex items-center justify-between px-6 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-10">
           <div className="flex items-center gap-4">
@@ -74,12 +80,13 @@ export default function CourseClient({ course, progressMap }: { course: any, pro
         </div>
 
         <div className="p-8 max-w-5xl">
-          <h2 className="text-2xl font-black text-white mb-2">الدرس الحالي</h2>
-          <p className="text-slate-400 text-sm leading-relaxed mb-8">{course.description}</p>
+          <h2 className="text-2xl font-black text-white mb-2">معلومات الدرس النشط</h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            أنت الآن تشاهد الدرس ذو المعرف: {activeLessonId}
+          </p>
         </div>
       </main>
 
-      {/* القسم الأيسر: القائمة الجانبية (المحتوى + المعلم الذكي) */}
       <aside className="w-80 lg:w-[400px] flex flex-col bg-slate-900 border-r border-slate-800 flex-shrink-0 z-20">
         <div className="flex bg-slate-950 p-2 gap-2 border-b border-slate-800">
           <button 
@@ -96,7 +103,6 @@ export default function CourseClient({ course, progressMap }: { course: any, pro
           </button>
         </div>
 
-        {/* عرض المحتوى حسب التبويب النشط */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
           {activeTab === 'syllabus' ? (
             <div className="p-4 space-y-6">
@@ -104,19 +110,23 @@ export default function CourseClient({ course, progressMap }: { course: any, pro
                 <div key={module.id}>
                   <h3 className="text-sm font-bold text-slate-300 mb-3 px-2">{module.title}</h3>
                   <div className="space-y-2">
-                    {module.lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any, idx: number) => {
+                    {module.lessons ? [...module.lessons].sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => {
                       const isCompleted = progressMap[lesson.id]?.is_completed;
-                      const isActive = idx === 0; // افتراضياً الدرس الأول نشط للتجربة
+                      const isActive = activeLessonId === lesson.id; 
                       
                       return (
-                        <button key={lesson.id} className={`w-full text-right flex items-start gap-3 p-3 rounded-xl transition-all ${isActive ? 'bg-indigo-600/10 border border-indigo-500/30' : 'hover:bg-slate-800 border border-transparent'}`}>
+                        <button 
+                          key={lesson.id} 
+                          onClick={() => setActiveLessonId(lesson.id)}
+                          className={`w-full text-right flex items-start gap-3 p-3 rounded-xl transition-all cursor-pointer ${isActive ? 'bg-indigo-600/10 border border-indigo-500/30' : 'hover:bg-slate-800 border border-transparent'}`}
+                        >
                           <div className="mt-0.5 flex-shrink-0">
                             {isCompleted ? <CheckCircle2 size={16} className="text-emerald-400" /> : <div className={`w-4 h-4 rounded-full border-2 ${isActive ? 'border-indigo-400' : 'border-slate-600'}`} />}
                           </div>
                           <p className={`text-sm font-medium ${isActive ? 'text-indigo-300' : 'text-slate-300'} line-clamp-2`}>{lesson.title}</p>
                         </button>
                       );
-                    })}
+                    }) : null}
                   </div>
                 </div>
               ))}
@@ -143,7 +153,7 @@ export default function CourseClient({ course, progressMap }: { course: any, pro
                   placeholder="اسأل المعلم الذكي..." 
                   className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#00a88f]" 
                 />
-                <button type="submit" disabled={isLoading || !input.trim()} className="bg-[#00a88f] hover:bg-[#008f7a] text-white p-3 rounded-xl disabled:opacity-50">
+                <button type="submit" disabled={isLoading || !input.trim()} className="bg-[#00a88f] hover:bg-[#008f7a] text-white p-3 rounded-xl disabled:opacity-50 transition-colors">
                   <Send size={16} />
                 </button>
               </form>
