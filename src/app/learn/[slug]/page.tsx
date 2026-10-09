@@ -1,215 +1,196 @@
-'use client';
-
-import { useState } from 'react';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  PlayCircle, BrainCircuit, Send, ArrowRight, 
-  Sparkles, Loader2, CheckCircle2, Lock, FileText 
-} from 'lucide-react';
+import { ChevronRight, PlayCircle, CheckCircle2, BrainCircuit, ListVideo } from 'lucide-react';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
+export const revalidate = 0;
 
-export default function LearnCoursePage() {
-  const [activeTab, setActiveTab] = useState<'ai' | 'syllabus'>('ai');
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+export default async function CoursePlayerPage({ params }: { params: { slug: string } }) {
+  // في Next.js 15، يجب عمل await لـ params و cookies
+  const resolvedParams = await params;
+  const cookieStore = await cookies();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      id: 'welcome',
-      role: 'assistant',
-      content: 'مرحباً بك في دبلوم الذكاء الاصطناعي! أنا المعلم الذكي لـ أكاديمية نماء، اسألني في أي وقت عن الشرح وسأقوم بإجابتك فوراً.'
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
     }
-  ]);
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  // 1. التحقق من المستخدم
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect(`/login?redirect=/learn/${resolvedParams.slug}`);
+  }
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input
-    };
+  // 2. جلب بيانات الكورس بناءً على الـ slug
+  const { data: course, error: courseError } = await supabase
+    .from('courses')
+    .select(`
+      id,
+      title,
+      description,
+      modules (
+        id,
+        title,
+        order_index,
+        lessons (
+          id,
+          title,
+          video_id,
+          order_index,
+          is_free_preview
+        )
+      )
+    `)
+    .eq('slug', resolvedParams.slug)
+    .single();
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput('');
-    setIsLoading(true);
+  if (courseError || !course) {
+    redirect('/dashboard'); // توجيه للوحة التحكم إذا كان الكورس غير موجود
+  }
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
-      });
+  // 3. التحقق من اشتراك الطالب في هذا الكورس
+  const { data: enrollment } = await supabase
+    .from('enrollments')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .eq('course_id', course.id)
+    .single();
 
-      const data = await response.json();
+  if (!enrollment || enrollment.status !== 'active') {
+    redirect('/dashboard'); // غير مشترك أو اشتراك غير نشط
+  }
 
-      if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: data.reply
-          }
-        ]);
-      } else {
-        throw new Error(data.error || 'خطأ في الاستجابة');
-      }
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: 'عذراً، تعذر الاتصال بالمعلم الذكي. يرجى التأكد من إضافة GOOGLE_API_KEY في ملف .env.local'
-        }
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 4. جلب تقدم الطالب في هذا الكورس
+  const { data: progressData } = await supabase
+    .from('lesson_progress')
+    .select('lesson_id, is_completed, last_watched_seconds')
+    .eq('user_id', user.id)
+    .eq('enrollment_id', enrollment.id);
+
+  const progressMap = new Map(progressData?.map((p) => [p.lesson_id, p]) || []);
+
+  // ترتيب الفصول والدروس (لضمان العرض الصحيح)
+  const sortedModules = course.modules?.sort((a: any, b: any) => a.order_index - b.order_index) || [];
+  sortedModules.forEach((m: any) => {
+    m.lessons = m.lessons?.sort((a: any, b: any) => a.order_index - b.order_index) || [];
+  });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col dir-rtl">
-      {/* Top Header */}
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-slate-400 hover:text-white transition-colors">
-            <ArrowRight size={20} />
-          </Link>
-          <div>
-            <h1 className="font-extrabold text-base md:text-lg text-white">دبلوم البرمجة بالذكاء الاصطناعي و Next.js</h1>
-            <span className="text-xs text-[#00a88f] font-semibold">الدرس 3: ربط واجهات API وأتمتة النظم</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Learning Workspace */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden dir-rtl" dir="rtl">
+      
+      {/* القسم الأيمن (الرئيسي): مشغل الفيديو والتفاصيل */}
+      <main className="flex-1 flex flex-col h-full overflow-y-auto relative scrollbar-hide">
         
-        {/* Right Section: Video Player */}
-        <div className="lg:col-span-8 p-4 lg:p-6 flex flex-col gap-6 overflow-y-auto">
-          <div className="aspect-video bg-black rounded-2xl border border-slate-800 overflow-hidden relative flex items-center justify-center shadow-2xl group">
-            <div className="text-center z-10">
-              <PlayCircle size={72} className="text-[#00a88f] animate-pulse cursor-pointer mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <p className="text-xs text-slate-300 bg-slate-900/90 px-4 py-1.5 rounded-full border border-slate-700 inline-block shadow-lg">
-                مشغّل الفيديو الذكي المحمي بنظام Bunny DRM
-              </p>
-            </div>
+        {/* شريط التنقل العلوي للمشغل */}
+        <header className="h-16 flex items-center justify-between px-6 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/dashboard" 
+              className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+              title="العودة للوحة التحكم"
+            >
+              <ChevronRight size={20} />
+            </Link>
+            <h1 className="text-lg font-bold text-white truncate max-w-md">
+              {course.title}
+            </h1>
           </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-full border border-indigo-500/20">
+              المعلم الذكي نشط
+            </span>
+          </div>
+        </header>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-            <h2 className="text-xl font-extrabold mb-2 text-white">عن هذا الدرس</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              تتعلم في هذه المحاضرة طريقة إعداد وتطوير واجهات API وربطها بنماذج الذكاء الاصطناعي لتوفير استجابة لحظية للطلاب.
-            </p>
+        {/* منطقة مشغل الفيديو (Placeholder حالياً) */}
+        <div className="w-full bg-black aspect-video flex items-center justify-center border-b border-slate-800 relative group">
+          {/* سنقوم بدمج Bunny DRM هنا لاحقاً */}
+          <div className="text-center">
+            <PlayCircle size={64} className="text-slate-700 mx-auto mb-4 group-hover:scale-110 transition-transform group-hover:text-[#00a88f]" />
+            <p className="text-slate-500 text-sm">منطقة العرض المحمية (Bunny DRM Video Player)</p>
           </div>
         </div>
 
-        {/* Left Section: AI Tutor Sidebar */}
-        <div className="lg:col-span-4 bg-slate-900 border-r border-slate-800 flex flex-col h-[calc(100vh-73px)]">
-          
-          <div className="flex border-b border-slate-800 bg-slate-950/50 p-2 gap-1">
-            <button
-              onClick={() => setActiveTab('ai')}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                activeTab === 'ai' ? 'bg-[#00a88f] text-white shadow-lg' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <BrainCircuit size={16} />
-              <span>المعلم الذكي (Gemini)</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('syllabus')}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                activeTab === 'syllabus' ? 'bg-[#00a88f] text-white shadow-lg' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <FileText size={16} />
-              <span>محتوى الكورس</span>
-            </button>
-          </div>
+        {/* تفاصيل الدرس الحالي */}
+        <div className="p-8 max-w-5xl">
+          <h2 className="text-2xl font-black text-white mb-2">الدرس الأول: دمج المعلم الذكي مع مشغل الفيديو</h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            في هذا الدرس سنتعلم كيف يتفاعل الذكاء الاصطناعي مع سياق الفيديو لحظة بلحظة...
+          </p>
+        </div>
+      </main>
 
-          {activeTab === 'ai' && (
-            <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-end'}`}
-                  >
-                    <div
-                      className={`max-w-[88%] p-3.5 rounded-2xl text-xs leading-relaxed ${
-                        m.role === 'user'
-                          ? 'bg-[#391e75] text-white rounded-tr-none shadow-md'
-                          : 'bg-slate-800 text-slate-200 border border-slate-700/80 rounded-tl-none shadow-sm'
+      {/* القسم الأيسر: القائمة الجانبية (المحتوى + المعلم الذكي) */}
+      <aside className="w-80 lg:w-96 flex flex-col bg-slate-900 border-r border-slate-800 flex-shrink-0 z-20">
+        
+        {/* تبويبات القائمة الجانبية */}
+        <div className="flex bg-slate-950 p-2 gap-2 border-b border-slate-800">
+          <button className="flex-1 py-2.5 flex items-center justify-center gap-2 text-xs font-bold rounded-xl bg-slate-800 text-white shadow-sm transition-all">
+            <ListVideo size={16} />
+            محتوى الكورس
+          </button>
+          <button className="flex-1 py-2.5 flex items-center justify-center gap-2 text-xs font-bold rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all border border-transparent">
+            <BrainCircuit size={16} className="text-purple-400" />
+            المعلم الذكي
+          </button>
+        </div>
+
+        {/* قائمة الفصول والدروس */}
+        <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+          {sortedModules.map((module: any, mIdx: number) => (
+            <div key={module.id} className="mb-6 last:mb-0">
+              <h3 className="text-sm font-bold text-slate-300 mb-3 px-2">
+                {module.title}
+              </h3>
+              <div className="space-y-1.5">
+                {module.lessons?.map((lesson: any, lIdx: number) => {
+                  const progress = progressMap.get(lesson.id);
+                  const isCompleted = progress?.is_completed;
+                  // نفترض الدرس الأول نشط للتجربة
+                  const isActive = mIdx === 0 && lIdx === 0; 
+
+                  return (
+                    <button
+                      key={lesson.id}
+                      className={`w-full text-right flex items-start gap-3 p-3 rounded-xl transition-all ${
+                        isActive 
+                          ? 'bg-indigo-600/10 border border-indigo-500/30' 
+                          : 'hover:bg-slate-800 border border-transparent'
                       }`}
                     >
-                      {m.role === 'assistant' && (
-                        <span className="flex items-center gap-1.5 text-[10px] text-[#00a88f] font-bold mb-1.5">
-                          <Sparkles size={12} /> المعلم الذكي
-                        </span>
-                      )}
-                      <p className="whitespace-pre-wrap">{m.content}</p>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="text-xs text-slate-400 animate-pulse flex items-center gap-2 py-2">
-                    <Loader2 size={14} className="animate-spin text-[#00a88f]" /> المعلم الذكي يفكر ويصيغ الإجابة...
-                  </div>
-                )}
-              </div>
-
-              <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="اسأل المعلم الذكي عن الشرح..."
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#00a88f] transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !input.trim()}
-                  className="bg-[#00a88f] hover:bg-[#008f7a] text-white p-3 rounded-xl transition-colors disabled:opacity-50"
-                >
-                  <Send size={16} />
-                </button>
-              </form>
-            </div>
-          )}
-
-          {activeTab === 'syllabus' && (
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
-                <span className="text-xs font-bold text-[#00a88f] block mb-2">الوحدة 1: الأساسيات</span>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-300 p-2.5 bg-slate-900 rounded-lg">
-                    <span className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-400" /> 1. مقدمة الكورس</span>
-                    <span className="text-[10px] text-slate-500">10 د</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-white p-2.5 bg-[#391e75]/40 border border-[#00a88f]/40 rounded-lg font-bold">
-                    <span className="flex items-center gap-2"><PlayCircle size={14} className="text-[#00a88f]" /> 2. ربط API الذكاء الاصطناعي</span>
-                    <span className="text-[10px] text-[#00a88f]">يعرض الآن</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 p-2.5 bg-slate-950/50 rounded-lg">
-                    <span className="flex items-center gap-2"><Lock size={14} /> 3. بناء لوحة التحكم السحابية</span>
-                    <span className="text-[10px]">25 د</span>
-                  </div>
-                </div>
+                      <div className="mt-0.5 flex-shrink-0">
+                        {isCompleted ? (
+                          <CheckCircle2 size={16} className="text-emerald-400" />
+                        ) : (
+                          <div className={`w-4 h-4 rounded-full border-2 ${isActive ? 'border-indigo-400' : 'border-slate-600'}`} />
+                        )}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${isActive ? 'text-indigo-300' : 'text-slate-300'} line-clamp-2 leading-snug`}>
+                          {lesson.title}
+                        </p>
+                        {progress?.last_watched_seconds > 0 && !isCompleted && (
+                          <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                            <div className="bg-indigo-400 h-full w-1/3"></div> {/* قيمة تجريبية */}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
+          ))}
         </div>
-
-      </div>
+      </aside>
     </div>
   );
 }
