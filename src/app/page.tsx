@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { 
-  Search, ShoppingCart, Sparkles, 
-  ArrowRight, PlayCircle, BrainCircuit, 
-  Building2, BookOpen, ChevronDown, Layers, UserPlus, LogIn, LogOut, LayoutDashboard 
+  Search, PlayCircle, BookOpen, UserPlus, LogIn, LogOut, LayoutDashboard,
+  Star, Clock, Shield, MonitorPlay
 } from 'lucide-react';
 
 export default function GlobalPlatformHome() {
@@ -31,10 +30,10 @@ export default function GlobalPlatformHome() {
     const fetchPublishedCourses = async () => {
       const { data } = await supabase
         .from('courses')
-        .select('id, title, slug, description, price')
+        .select('id, title, slug, description, price, instructor_id')
         .eq('is_published', true)
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(6); // زيادة العدد لملء الواجهة
       
       if (data) setCourses(data);
       setIsLoadingCourses(false);
@@ -55,84 +54,72 @@ export default function GlobalPlatformHome() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans dir-rtl selection:bg-[#00a88f] selection:text-white">
+    <div className="min-h-screen bg-white text-slate-900 font-sans dir-rtl" dir="rtl">
       
-      <div className="bg-gradient-to-r from-[#391e75] via-[#2d175e] to-[#00a88f] text-white py-2 px-4 text-center text-xs md:text-sm font-semibold flex items-center justify-center gap-3 border-b border-white/10 shadow-md">
-        <span className="bg-white/20 px-2 py-0.5 rounded-full text-[11px] uppercase tracking-wider font-bold">تحديث جديد</span>
-        <span className="flex items-center gap-1.5">
-          <Sparkles size={15} className="text-amber-300 animate-pulse" />
-          تم تفعيل المعلم الذكي (Gemini 1.5) ليتفاعل مع فيديوهات الدروس لحظياً!
-        </span>
-      </div>
-
-      <header className="bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50">
+      {/* شريط التصفح الرئيسي (Header) */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 gap-4">
+          <div className="flex items-center justify-between h-20 gap-6">
             
-            <Link href="/" className="flex items-center gap-3 shrink-0 group">
-              <div className="w-11 h-11 bg-gradient-to-tr from-[#391e75] to-[#00a88f] rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-[#00a88f]/20 border border-white/10 group-hover:scale-105 transition-transform">
+            {/* الشعار */}
+            <Link href="/" className="flex items-center gap-2 shrink-0">
+              <div className="w-10 h-10 bg-[#00a88f] rounded-lg flex items-center justify-center text-white font-black text-xl">
                 M
               </div>
-              <div>
-                <span className="font-black text-2xl tracking-tight text-white block leading-none">مسار العالمية</span>
-                <span className="text-[10px] text-[#00a88f] font-bold tracking-widest uppercase">LMS Engine</span>
-              </div>
+              <span className="font-black text-xl tracking-tight text-slate-900 hidden sm:block">مسار</span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-1 text-xs font-bold text-slate-300 hover:text-white cursor-pointer px-3 py-2 rounded-xl hover:bg-slate-800 transition-all">
-              <Layers size={16} className="text-[#00a88f]" />
-              <span>تصفح الأقسام</span>
-              <ChevronDown size={14} />
-            </div>
-
-            <div className="hidden md:flex flex-1 max-w-xl relative">
+            {/* شريط البحث المدمج (مثل Udemy) */}
+            <div className="hidden md:flex flex-1 max-w-2xl relative">
               <input
                 type="text"
-                placeholder="ابحث عن كورس، أو مهارة (مثال: الذكاء الاصطناعي)..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-full py-2.5 pr-11 pl-4 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#00a88f] transition-all shadow-inner"
+                placeholder="ابحث عن أي شيء (مثال: تطوير الويب، إدارة الأعمال)..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-full py-3 pr-12 pl-4 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-[#00a88f] focus:ring-1 focus:ring-[#00a88f] transition-all"
               />
-              <Search size={18} className="absolute right-4 top-3 text-slate-500" />
+              <Search size={20} className="absolute right-4 top-3.5 text-slate-400" />
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <Link href="#b2b" className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-[#00a88f] transition-colors">
-                <Building2 size={16} className="text-[#00a88f]" />
-                <span>حلول الشركات</span>
+            {/* الأزرار العلوية */}
+            <div className="flex items-center gap-4 shrink-0">
+              
+              {/* رابط التدريس (Instructor Link) */}
+              <Link 
+                href={user ? "/instructor" : "/login?redirect=/instructor"} 
+                className="hidden lg:block text-sm font-bold text-slate-600 hover:text-[#00a88f] transition-colors"
+              >
+                التدريس في مسار
               </Link>
 
-              <div className="h-6 w-[1px] bg-slate-800 hidden lg:block"></div>
+              <div className="h-6 w-[1px] bg-slate-200 hidden lg:block"></div>
 
               {user ? (
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleSignOut}
-                    className="text-slate-400 hover:text-red-400 px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5"
-                  >
-                    <LogOut size={15} />
-                    <span className="hidden sm:inline">خروج</span>
-                  </button>
+                <div className="flex items-center gap-3">
                   <Link 
                     href="/dashboard" 
-                    className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#00a88f]/20 flex items-center gap-1.5"
+                    className="text-sm font-bold text-slate-700 hover:text-[#00a88f] transition-colors"
                   >
-                    <LayoutDashboard size={15} />
-                    <span>لوحة التحكم</span>
+                    لوحة التحكم
                   </Link>
+                  <button 
+                    onClick={handleSignOut}
+                    className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    خروج
+                  </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Link 
                     href="/login" 
-                    className="text-slate-300 hover:text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5"
+                    className="text-sm font-bold text-slate-700 hover:text-[#00a88f] border border-slate-300 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    دخول
+                    تسجيل الدخول
                   </Link>
                   <Link 
                     href="/login" 
-                    className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#00a88f]/20 flex items-center gap-1.5"
+                    className="text-sm font-bold text-white bg-[#00a88f] hover:bg-[#008f7a] px-4 py-2 rounded-lg transition-colors"
                   >
-                    <UserPlus size={15} />
-                    <span>حساب جديد</span>
+                    حساب جديد
                   </Link>
                 </div>
               )}
@@ -142,146 +129,126 @@ export default function GlobalPlatformHome() {
         </div>
       </header>
 
-      <section className="relative py-20 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 border-b border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* قسم البطل (Hero Section) - تصميم نظيف ومباشر */}
+      <section className="bg-slate-50 py-16 md:py-24 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-tight mb-6">
+              تعلم المهارات التي تحتاجها، <br />
+              في الوقت الذي تريده.
+            </h1>
+            <p className="text-lg text-slate-600 mb-8 leading-relaxed max-w-2xl">
+              استكشف آلاف الكورسات في البرمجة، التصميم، التسويق، وغيرها، وتفاعل مع المعلم الذكي للحصول على شرح مخصص في أي وقت.
+            </p>
             
-            <div className="lg:col-span-7 text-right">
-              <div className="inline-flex items-center gap-2 bg-[#391e75]/40 border border-purple-500/30 text-[#00a88f] font-bold px-4 py-2 rounded-full text-xs mb-6 shadow-xl">
-                <Sparkles size={16} />
-                <span>الجيل الجديد من منصات التعليم الرقمي المدعومة بالـ AI</span>
-              </div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
-                ابنِ مهارات المستقبل مع <br />
-                <span className="bg-gradient-to-l from-[#00a88f] to-purple-400 bg-clip-text text-transparent">
-                  منظومة مسار التفاعلية
-                </span>
-              </h1>
-
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-8 max-w-2xl">
-                تجربة تعليمية فريدة تدمج بين فيديوهات عالية الجودة (Bunny DRM) ومعلم ذكي مرافق لك في كل درس ليجيب على أسئلتك ويحلل تقدمك لحظة بلحظة.
-              </p>
-
-              <div className="flex flex-wrap gap-4 mb-10">
-                {user ? (
-                  <Link 
-                    href="/dashboard" 
-                    className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all shadow-xl shadow-[#00a88f]/25 flex items-center gap-3 hover:-translate-y-0.5"
-                  >
-                    <PlayCircle size={20} />
-                    <span>استكمل مسارك التعليمي</span>
-                  </Link>
-                ) : (
-                  <>
-                    <Link 
-                      href="/login" 
-                      className="bg-[#00a88f] hover:bg-[#008f7a] text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all shadow-xl shadow-[#00a88f]/25 flex items-center gap-3 hover:-translate-y-0.5"
-                    >
-                      <UserPlus size={20} />
-                      <span>ابدأ رحلتك مجاناً</span>
-                    </Link>
-                    <a 
-                      href="#courses" 
-                      className="bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white px-8 py-4 rounded-2xl font-extrabold text-sm transition-all flex items-center gap-2"
-                    >
-                      <BookOpen size={20} className="text-[#00a88f]" />
-                      <span>تصفح الكورسات</span>
-                    </a>
-                  </>
-                )}
-              </div>
-
-              <div className="pt-8 border-t border-slate-800 grid grid-cols-3 gap-6">
-                <div>
-                  <span className="block font-black text-2xl text-white">100%</span>
-                  <span className="text-xs text-slate-500">حماية وتشفير</span>
-                </div>
-                <div>
-                  <span className="block font-black text-2xl text-[#00a88f]">تفاعلي</span>
-                  <span className="text-xs text-slate-500">متابعة للإنجاز</span>
-                </div>
-                <div>
-                  <span className="block font-black text-2xl text-purple-400">Gemini AI</span>
-                  <span className="text-xs text-slate-500">معلم ذكي مدمج</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl relative">
-                <div className="absolute -top-3 -right-3 bg-gradient-to-r from-[#00a88f] to-teal-600 text-white text-[11px] font-black px-4 py-1 rounded-full shadow-lg">
-                  تجربة المشغل الذكي
-                </div>
-
-                <div className="block aspect-video bg-slate-950 rounded-2xl relative overflow-hidden border border-slate-800 flex items-center justify-center group">
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#00a88f]/10 to-transparent"></div>
-                  <BrainCircuit size={64} className="text-[#00a88f]/50 group-hover:scale-110 group-hover:text-[#00a88f] transition-all duration-500 z-10" />
-                  <span className="absolute bottom-4 right-4 text-xs font-bold text-white bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-700">
-                    واجهة التعلم الجديدة
-                  </span>
-                </div>
-
-                <div className="mt-4 p-4 bg-slate-950/80 rounded-2xl border border-slate-800/80">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#00a88f] mb-2">
-                    <BrainCircuit size={16} /> رسالة من المعلم الذكي
-                  </div>
-                  <p className="text-xs text-slate-300 leading-normal">
-                    "أهلاً بك! أنا متصل بمحتوى الكورسات. سجل دخولك الآن واختر دورتك التدريبية لنبدأ رحلة التعلم معاً."
-                  </p>
-                </div>
-              </div>
+            {/* شريط بحث إضافي للموبايل */}
+            <div className="md:hidden relative w-full mb-8">
+              <input
+                type="text"
+                placeholder="ماذا تريد أن تتعلم اليوم؟"
+                className="w-full bg-white border border-slate-300 rounded-full py-3 pr-12 pl-4 text-sm text-slate-900 focus:outline-none focus:border-[#00a88f]"
+              />
+              <Search size={20} className="absolute right-4 top-3.5 text-slate-400" />
             </div>
 
           </div>
         </div>
       </section>
 
-      <section id="courses" className="py-20 bg-slate-950 border-b border-slate-800">
+      {/* قسم الكورسات (الكورسات الرائجة) */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl font-black text-white mb-4">أحدث المسارات التعليمية</h2>
-            <p className="text-slate-400 text-sm">
-              اختر من بين الكورسات المتاحة والمصممة بعناية لتناسب احتياجات سوق العمل، والمدعومة بالكامل بنظام الذكاء الاصطناعي.
-            </p>
-          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-8">أحدث الكورسات الرائجة</h2>
 
           {isLoadingCourses ? (
             <div className="flex justify-center items-center h-40">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a88f]"></div>
             </div>
           ) : courses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {courses.map((course) => (
-                <div key={course.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-[#00a88f]/50 transition-all group flex flex-col">
-                  <div className="aspect-video bg-slate-950 flex items-center justify-center border-b border-slate-800 relative">
-                    <BookOpen className="text-slate-800 w-16 h-16 group-hover:scale-110 transition-transform group-hover:text-[#00a88f]/40" />
-                    <div className="absolute top-4 left-4 bg-[#00a88f] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                      {course.price > 0 ? `$${course.price}` : 'متاح للتسجيل'}
+                <Link 
+                  href={`/courses/${course.slug}`} 
+                  key={course.id} 
+                  className="group flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  {/* صورة الكورس (عنصر نائب حالياً) */}
+                  <div className="aspect-video bg-slate-100 flex items-center justify-center relative overflow-hidden">
+                    <MonitorPlay className="w-12 h-12 text-slate-300 group-hover:scale-110 transition-transform duration-500" />
+                    {/* وسم المعلم الذكي */}
+                    <div className="absolute top-2 right-2 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                      <Star size={10} className="fill-white" /> مدعوم بـ AI
                     </div>
                   </div>
-                  <div className="p-6 flex flex-col flex-1">
-                    <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{course.title}</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-3 flex-1">
-                      {course.description}
-                    </p>
-                    {/* التحديث هنا: توجيه المستخدم لصفحة المبيعات (courses) وليس المشغل (learn) */}
-                    <Link 
-                      href={`/courses/${course.slug}`}
-                      className="w-full bg-slate-800 hover:bg-[#00a88f] text-white py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 group/btn"
-                    >
-                      <span>استكشاف الكورس</span>
-                      <ArrowRight size={14} className="group-hover/btn:-translate-x-1 transition-transform" />
-                    </Link>
+                  
+                  {/* تفاصيل الكورس */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm mb-2 line-clamp-2 group-hover:text-[#00a88f] transition-colors">
+                      {course.title}
+                    </h3>
+                    
+                    {/* اسم المدرس (مؤقتاً نعرض "مدرس مسار") */}
+                    <p className="text-xs text-slate-500 mb-3">مدرس معتمد في مسار</p>
+                    
+                    {/* التقييم */}
+                    <div className="flex items-center gap-1 mb-3">
+                      <span className="text-sm font-bold text-slate-900">4.8</span>
+                      <div className="flex text-amber-400">
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                      </div>
+                      <span className="text-xs text-slate-500">(1,240)</span>
+                    </div>
+
+                    {/* السعر */}
+                    <div className="mt-auto pt-4 border-t border-slate-100">
+                      <div className="font-black text-lg text-slate-900">
+                        {course.price > 0 ? `$${course.price}` : 'مجانــــاً'}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 bg-slate-900/50 rounded-3xl border border-slate-800 border-dashed">
-              <p className="text-slate-400 text-sm">لا توجد كورسات منشورة حالياً. (قم بإضافة كورس من لوحة الإدارة واجعله "منشوراً")</p>
+            <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+              <p className="text-slate-500 text-sm">لا توجد كورسات متاحة حالياً.</p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* قسم دعوة المدرسين (Instructor CTA) */}
+      <section className="py-20 bg-slate-900 text-white border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+            
+            <div className="flex-1">
+              <h2 className="text-3xl font-black mb-4">انضم إلينا كصانع محتوى</h2>
+              <p className="text-slate-400 text-lg mb-8 max-w-xl">
+                شارك معرفتك مع آلاف الطلاب حول العالم، ابنِ جمهورك الخاص، وحقق دخلاً مستداماً. منصة "مسار" توفر لك كل الأدوات التي تحتاجها للنجاح، بما في ذلك الذكاء الاصطناعي المدمج.
+              </p>
+              <Link 
+                href={user ? "/instructor" : "/login?redirect=/instructor"} 
+                className="inline-flex items-center gap-2 bg-[#00a88f] hover:bg-[#008f7a] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg shadow-[#00a88f]/20"
+              >
+                ابدأ التدريس اليوم <ArrowRight size={20} />
+              </Link>
+            </div>
+            
+            {/* صورة تعبيرية (عنصر نائب) */}
+            <div className="flex-1 w-full max-w-md hidden md:block">
+              <div className="aspect-square bg-gradient-to-tr from-[#00a88f]/20 to-purple-600/20 rounded-full flex items-center justify-center p-8 border border-white/10">
+                 <div className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center shadow-2xl">
+                    <UserPlus size={64} className="text-[#00a88f]" />
+                 </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
