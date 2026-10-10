@@ -1,250 +1,233 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, User, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
+import { 
+  Search, PlayCircle, BookOpen, UserPlus, LogIn, LogOut, LayoutDashboard,
+  Star, Clock, Shield, MonitorPlay, ArrowRight
+} from 'lucide-react';
 
-// فصل نموذج تسجيل الدخول في مكون فرعي لاستخدام useSearchParams بأمان
-function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
+export default function GlobalPlatformHome() {
+  const [user, setUser] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams?.get('redirect') || '/dashboard';
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    checkUser();
 
-    try {
-      if (isLogin) {
-        // تسجيل الدخول
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        
-        router.push(redirectTo);
-        router.refresh();
-      } else {
-        // إنشاء حساب جديد
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              role: 'student',
-            },
-          },
-        });
-        if (error) throw error;
+    const fetchPublishedCourses = async () => {
+      const { data } = await supabase
+        .from('courses')
+        .select('id, title, slug, description, price, instructor_id')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(6);
+      
+      if (data) setCourses(data);
+      setIsLoadingCourses(false);
+    };
+    fetchPublishedCourses();
 
-        // إضافة المستخدم لجدول profiles
-        if (data.user) {
-           await supabase.from('profiles').upsert({
-             id: data.user.id,
-             full_name: fullName,
-             role: 'student'
-           }, { onConflict: 'id' });
-        }
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
 
-        router.push(redirectTo);
-        router.refresh();
-      }
-    } catch (err: any) {
-      setError(err.message || 'حدث خطأ أثناء العملية. يرجى المحاولة مرة أخرى.');
-    } finally {
-      setIsLoading(false);
-    }
+    return () => authListener.subscription.unsubscribe();
+  }, [supabase]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.refresh();
   };
 
   return (
-    <div className="w-full">
-      <div className="mb-10 flex flex-col items-center sm:items-start">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#00a88f] mb-8 transition-colors">
-          <ArrowRight size={16} />
-          العودة للرئيسية
-        </Link>
-        <Image src="/logo.png" alt="Masar Logo" width={140} height={45} className="object-contain" priority />
-        <h2 className="mt-8 text-3xl font-black text-slate-900">
-          {isLogin ? 'مرحباً بعودتك' : 'ابدأ رحلتك التعليمية'}
-        </h2>
-        <p className="mt-2 text-sm text-slate-600">
-          {isLogin 
-            ? 'سجل دخولك لاستكمال دروسك ومتابعة تقدمك.' 
-            : 'أنشئ حساباً مجانياً وافتح آفاقاً جديدة للمعرفة.'}
-        </p>
-      </div>
-
-      <div className="mt-8">
-        <form onSubmit={handleAuth} className="space-y-6">
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400 mr-3" />
-                </div>
-                <input
-                  type="text"
-                  required={!isLogin}
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm"
-                  placeholder="مثال: وليد طه"
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">البريد الإلكتروني</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-slate-400 mr-3" />
-              </div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm text-left"
-                placeholder="you@example.com"
-                dir="ltr"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">كلمة المرور</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-slate-400 mr-3" />
-              </div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm text-left"
-                placeholder="••••••••"
-                dir="ltr"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#00a88f] hover:bg-[#008f7a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00a88f] transition-all disabled:opacity-50"
-          >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              isLogin ? 'دخول' : 'إنشاء حساب'
-            )}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-slate-600">
-            {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-              }}
-              className="font-bold text-[#00a88f] hover:text-[#008f7a] mr-2"
-            >
-              {isLogin ? 'سجل الآن' : 'قم بتسجيل الدخول'}
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// المكون الرئيسي للصفحة
-export default function AuthPage() {
-  return (
-    <div className="min-h-screen flex bg-slate-50 font-sans dir-rtl" dir="rtl">
+    <div className="min-h-screen bg-white text-slate-900 font-sans dir-rtl" dir="rtl">
       
-      {/* الجانب الأيمن (نموذج التسجيل) */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[560px] bg-white shadow-2xl z-10 relative">
-        <div className="mx-auto w-full max-w-sm lg:w-[400px]">
-          {/* تغليف المكون بـ Suspense لحل مشكلة Vercel */}
-          <Suspense fallback={<div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-[#00a88f] border-t-transparent rounded-full animate-spin"></div></div>}>
-            <AuthForm />
-          </Suspense>
-        </div>
-      </div>
-
-      {/* الجانب الأيسر (صورة وتفاصيل المنصة) */}
-      <div className="hidden lg:flex flex-1 relative bg-slate-900 items-center justify-center p-12 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#391e75]/90 to-[#00a88f]/90 mix-blend-multiply"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#00a88f] rounded-full blur-[100px] opacity-50"></div>
-        <div className="absolute top-20 right-20 w-72 h-72 bg-[#391e75] rounded-full blur-[80px] opacity-50"></div>
-
-        <div className="relative z-10 max-w-xl text-white">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold px-4 py-2 rounded-full text-xs mb-8">
-            <Sparkles size={16} className="text-amber-300" />
-            <span>الجيل الجديد من منصات التعليم الرقمي</span>
-          </div>
-          
-          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
-            مستقبلك يبدأ من هنا.
-          </h2>
-          
-          <p className="text-lg text-slate-200 mb-12 leading-relaxed">
-            انضم إلى آلاف الطلاب الذين يطورون مهاراتهم يومياً باستخدام أحدث تقنيات التعلم المدعومة بالذكاء الاصطناعي (Gemini).
-          </p>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-              <div className="bg-[#00a88f]/20 p-2 rounded-xl text-[#00a88f]">
-                <CheckCircle2 size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">وصول غير محدود</h4>
-                <p className="text-xs text-slate-400 mt-1">تعلم بالسرعة التي تناسبك وفي أي وقت.</p>
-              </div>
-            </div>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20 gap-6">
             
-            <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-              <div className="bg-purple-500/20 p-2 rounded-xl text-purple-400">
-                <CheckCircle2 size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">معلم ذكي مرافق</h4>
-                <p className="text-xs text-slate-400 mt-1">مساعد ذكي يجيب على أسئلتك فوراً أثناء الدرس.</p>
+            <Link href="/" className="flex items-center shrink-0 group">
+              <Image 
+                src="/logo.png" 
+                alt="Masar EdTech Logo" 
+                width={140} 
+                height={45} 
+                className="object-contain group-hover:scale-105 transition-transform"
+                priority
+              />
+            </Link>
+
+            <div className="hidden md:flex flex-1 max-w-2xl relative">
+              <input
+                type="text"
+                placeholder="ابحث عن أي شيء (مثال: تطوير الويب، إدارة الأعمال)..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-full py-3 pr-12 pl-4 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-[#00a88f] focus:ring-1 focus:ring-[#00a88f] transition-all"
+              />
+              <Search size={20} className="absolute right-4 top-3.5 text-slate-400" />
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0">
+              <Link 
+                href={user ? "/instructor" : "/login?redirect=/instructor"} 
+                className="hidden lg:block text-sm font-bold text-slate-600 hover:text-[#00a88f] transition-colors"
+              >
+                التدريس في مسار
+              </Link>
+              <div className="h-6 w-[1px] bg-slate-200 hidden lg:block"></div>
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <Link 
+                    href="/dashboard" 
+                    className="text-sm font-bold text-slate-700 hover:text-[#00a88f] transition-colors"
+                  >
+                    لوحة التحكم
+                  </Link>
+                  <button 
+                    onClick={handleSignOut}
+                    className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    خروج
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Link 
+                    href="/login" 
+                    className="text-sm font-bold text-slate-700 hover:text-[#00a88f] border border-slate-300 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    تسجيل الدخول
+                  </Link>
+                  <Link 
+                    href="/login" 
+                    className="text-sm font-bold text-white bg-[#00a88f] hover:bg-[#008f7a] px-4 py-2 rounded-lg transition-colors"
+                  >
+                    حساب جديد
+                  </Link>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </header>
+
+      <section className="bg-slate-50 py-16 md:py-24 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-tight mb-6">
+              تعلم المهارات التي تحتاجها، <br />
+              في الوقت الذي تريده.
+            </h1>
+            <p className="text-lg text-slate-600 mb-8 leading-relaxed max-w-2xl">
+              استكشف آلاف الكورسات في البرمجة، التصميم، التسويق، وغيرها، وتفاعل مع المعلم الذكي للحصول على شرح مخصص في أي وقت.
+            </p>
+            <div className="md:hidden relative w-full mb-8">
+              <input
+                type="text"
+                placeholder="ماذا تريد أن تتعلم اليوم؟"
+                className="w-full bg-white border border-slate-300 rounded-full py-3 pr-12 pl-4 text-sm text-slate-900 focus:outline-none focus:border-[#00a88f]"
+              />
+              <Search size={20} className="absolute right-4 top-3.5 text-slate-400" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-black text-slate-900 mb-8">أحدث الكورسات الرائجة</h2>
+          {isLoadingCourses ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a88f]"></div>
+            </div>
+          ) : courses.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {courses.map((course) => (
+                <Link 
+                  href={`/courses/${course.slug}`} 
+                  key={course.id} 
+                  className="group flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="aspect-video bg-slate-100 flex items-center justify-center relative overflow-hidden">
+                    <MonitorPlay className="w-12 h-12 text-slate-300 group-hover:scale-110 transition-transform duration-500" />
+                    <div className="absolute top-2 right-2 bg-[#391e75] text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                      <Star size={10} className="fill-white" /> مدعوم بـ AI
+                    </div>
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm mb-2 line-clamp-2 group-hover:text-[#00a88f] transition-colors">
+                      {course.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-3">مدرس معتمد في مسار</p>
+                    <div className="flex items-center gap-1 mb-3">
+                      <span className="text-sm font-bold text-slate-900">4.8</span>
+                      <div className="flex text-amber-400">
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                        <Star size={12} className="fill-amber-400" />
+                      </div>
+                      <span className="text-xs text-slate-500">(1,240)</span>
+                    </div>
+                    <div className="mt-auto pt-4 border-t border-slate-100">
+                      <div className="font-black text-lg text-slate-900">
+                        {course.price > 0 ? `$${course.price}` : 'مجانــــاً'}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+              <p className="text-slate-500 text-sm">لا توجد كورسات متاحة حالياً.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="py-20 bg-slate-900 text-white border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+            <div className="flex-1">
+              <h2 className="text-3xl font-black mb-4">انضم إلينا كصانع محتوى</h2>
+              <p className="text-slate-400 text-lg mb-8 max-w-xl">
+                شارك معرفتك مع آلاف الطلاب حول العالم، ابنِ جمهورك الخاص، وحقق دخلاً مستداماً. منصة "مسار" توفر لك كل الأدوات التي تحتاجها للنجاح، بما في ذلك الذكاء الاصطناعي المدمج.
+              </p>
+              <Link 
+                href={user ? "/instructor" : "/login?redirect=/instructor"} 
+                className="inline-flex items-center gap-2 bg-[#00a88f] hover:bg-[#008f7a] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg shadow-[#00a88f]/20"
+              >
+                ابدأ التدريس اليوم <ArrowRight size={20} />
+              </Link>
+            </div>
+            <div className="flex-1 w-full max-w-md hidden md:block">
+              <div className="aspect-square bg-gradient-to-tr from-[#00a88f]/20 to-[#391e75]/20 rounded-full flex items-center justify-center p-8 border border-white/10">
+                 <div className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center shadow-2xl">
+                    <UserPlus size={64} className="text-[#00a88f]" />
+                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
     </div>
   );
 }

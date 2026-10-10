@@ -7,7 +7,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, User, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
-// فصل النموذج الذي يستخدم useSearchParams إلى مكون فرعي
 function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -32,30 +31,26 @@ function AuthForm() {
 
     try {
       if (isLogin) {
-        // تسجيل الدخول
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        
         router.push(redirectTo);
         router.refresh();
       } else {
-        // إنشاء حساب جديد
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName,
-              role: 'student', // الدور الافتراضي لأي مستخدم جديد
+              role: 'student',
             },
           },
         });
         if (error) throw error;
 
-        // إضافة المستخدم لجدول profiles
         if (data.user) {
            await supabase.from('profiles').upsert({
              id: data.user.id,
@@ -63,8 +58,6 @@ function AuthForm() {
              role: 'student'
            }, { onConflict: 'id' });
         }
-
-        // التوجيه
         router.push(redirectTo);
         router.refresh();
       }
@@ -95,8 +88,6 @@ function AuthForm() {
 
       <div className="mt-8">
         <form onSubmit={handleAuth} className="space-y-6">
-          
-          {/* حقل الاسم (يظهر فقط في حالة إنشاء حساب جديد) */}
           {!isLogin && (
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
@@ -190,42 +181,27 @@ function AuthForm() {
   );
 }
 
-// المكون الرئيسي للصفحة
 export default function AuthPage() {
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans dir-rtl" dir="rtl">
-      
-      {/* الجانب الأيمن (نموذج التسجيل) */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[560px] bg-white shadow-2xl z-10 relative">
         <div className="mx-auto w-full max-w-sm lg:w-[400px]">
-          {/* تغليف المكون الفرعي بـ Suspense */}
-          <Suspense fallback={<div>جاري التحميل...</div>}>
+          <Suspense fallback={<div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-[#00a88f] border-t-transparent rounded-full animate-spin"></div></div>}>
             <AuthForm />
           </Suspense>
         </div>
       </div>
-
-      {/* الجانب الأيسر (صورة وتفاصيل المنصة) */}
       <div className="hidden lg:flex flex-1 relative bg-slate-900 items-center justify-center p-12 overflow-hidden">
-        {/* خلفية جمالية */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#391e75]/90 to-[#00a88f]/90 mix-blend-multiply"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#00a88f] rounded-full blur-[100px] opacity-50"></div>
         <div className="absolute top-20 right-20 w-72 h-72 bg-[#391e75] rounded-full blur-[80px] opacity-50"></div>
-
         <div className="relative z-10 max-w-xl text-white">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold px-4 py-2 rounded-full text-xs mb-8">
             <Sparkles size={16} className="text-amber-300" />
             <span>الجيل الجديد من منصات التعليم الرقمي</span>
           </div>
-          
-          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
-            مستقبلك يبدأ من هنا.
-          </h2>
-          
-          <p className="text-lg text-slate-200 mb-12 leading-relaxed">
-            انضم إلى آلاف الطلاب الذين يطورون مهاراتهم يومياً باستخدام أحدث تقنيات التعلم المدعومة بالذكاء الاصطناعي (Gemini).
-          </p>
-
+          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">مستقبلك يبدأ من هنا.</h2>
+          <p className="text-lg text-slate-200 mb-12 leading-relaxed">انضم إلى آلاف الطلاب الذين يطورون مهاراتهم يومياً باستخدام أحدث تقنيات التعلم المدعومة بالذكاء الاصطناعي (Gemini).</p>
           <div className="space-y-4">
             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
               <div className="bg-[#00a88f]/20 p-2 rounded-xl text-[#00a88f]">
@@ -236,7 +212,6 @@ export default function AuthPage() {
                 <p className="text-xs text-slate-400 mt-1">تعلم بالسرعة التي تناسبك وفي أي وقت.</p>
               </div>
             </div>
-            
             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
               <div className="bg-purple-500/20 p-2 rounded-xl text-purple-400">
                 <CheckCircle2 size={24} />
