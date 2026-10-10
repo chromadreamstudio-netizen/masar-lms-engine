@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, User, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
-export default function AuthPage() {
+// فصل النموذج الذي يستخدم useSearchParams إلى مكون فرعي
+function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,7 +55,7 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // إضافة المستخدم لجدول profiles (قد يقوم الـ Trigger الخاص بك بذلك، ولكن كإجراء احتياطي)
+        // إضافة المستخدم لجدول profiles
         if (data.user) {
            await supabase.from('profiles').upsert({
              id: data.user.id,
@@ -75,126 +76,136 @@ export default function AuthPage() {
   };
 
   return (
+    <>
+      <div className="mb-10 flex flex-col items-center sm:items-start">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#00a88f] mb-8 transition-colors">
+          <ArrowRight size={16} />
+          العودة للرئيسية
+        </Link>
+        <Image src="/logo.png" alt="Masar Logo" width={140} height={45} className="object-contain" priority />
+        <h2 className="mt-8 text-3xl font-black text-slate-900">
+          {isLogin ? 'مرحباً بعودتك' : 'ابدأ رحلتك التعليمية'}
+        </h2>
+        <p className="mt-2 text-sm text-slate-600">
+          {isLogin 
+            ? 'سجل دخولك لاستكمال دروسك ومتابعة تقدمك.' 
+            : 'أنشئ حساباً مجانياً وافتح آفاقاً جديدة للمعرفة.'}
+        </p>
+      </div>
+
+      <div className="mt-8">
+        <form onSubmit={handleAuth} className="space-y-6">
+          
+          {/* حقل الاسم (يظهر فقط في حالة إنشاء حساب جديد) */}
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-slate-400 mr-3" />
+                </div>
+                <input
+                  type="text"
+                  required={!isLogin}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm"
+                  placeholder="مثال: وليد طه"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">البريد الإلكتروني</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-slate-400 mr-3" />
+              </div>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm text-left"
+                placeholder="you@example.com"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">كلمة المرور</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-slate-400 mr-3" />
+              </div>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm text-left"
+                placeholder="••••••••"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#00a88f] hover:bg-[#008f7a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00a88f] transition-all disabled:opacity-50"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              isLogin ? 'دخول' : 'إنشاء حساب'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <p className="text-sm text-slate-600">
+            {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
+              className="font-bold text-[#00a88f] hover:text-[#008f7a] mr-2"
+            >
+              {isLogin ? 'سجل الآن' : 'قم بتسجيل الدخول'}
+            </button>
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// المكون الرئيسي للصفحة
+export default function AuthPage() {
+  return (
     <div className="min-h-screen flex bg-slate-50 font-sans dir-rtl" dir="rtl">
       
       {/* الجانب الأيمن (نموذج التسجيل) */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[560px] bg-white shadow-2xl z-10 relative">
         <div className="mx-auto w-full max-w-sm lg:w-[400px]">
-          
-          {/* العودة للرئيسية وشعار المنصة */}
-          <div className="mb-10 flex flex-col items-center sm:items-start">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#00a88f] mb-8 transition-colors">
-              <ArrowRight size={16} />
-              العودة للرئيسية
-            </Link>
-            <Image src="/logo.png" alt="Masar Logo" width={140} height={45} className="object-contain" priority />
-            <h2 className="mt-8 text-3xl font-black text-slate-900">
-              {isLogin ? 'مرحباً بعودتك' : 'ابدأ رحلتك التعليمية'}
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              {isLogin 
-                ? 'سجل دخولك لاستكمال دروسك ومتابعة تقدمك.' 
-                : 'أنشئ حساباً مجانياً وافتح آفاقاً جديدة للمعرفة.'}
-            </p>
-          </div>
-
-          <div className="mt-8">
-            <form onSubmit={handleAuth} className="space-y-6">
-              
-              {/* حقل الاسم (يظهر فقط في حالة إنشاء حساب جديد) */}
-              {!isLogin && (
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-slate-400 mr-3" />
-                    </div>
-                    <input
-                      type="text"
-                      required={!isLogin}
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm"
-                      placeholder="مثال: وليد طه"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">البريد الإلكتروني</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-slate-400 mr-3" />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm text-left"
-                    placeholder="you@example.com"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">كلمة المرور</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400 mr-3" />
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:ring-[#00a88f] focus:border-[#00a88f] focus:bg-white transition-colors text-sm text-left"
-                    placeholder="••••••••"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#00a88f] hover:bg-[#008f7a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00a88f] transition-all disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  isLogin ? 'دخول' : 'إنشاء حساب'
-                )}
-              </button>
-            </form>
-
-            <div className="mt-8 text-center">
-              <p className="text-sm text-slate-600">
-                {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
-                <button
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setError(null);
-                  }}
-                  className="font-bold text-[#00a88f] hover:text-[#008f7a] mr-2"
-                >
-                  {isLogin ? 'سجل الآن' : 'قم بتسجيل الدخول'}
-                </button>
-              </p>
-            </div>
-          </div>
+          {/* تغليف المكون الفرعي بـ Suspense */}
+          <Suspense fallback={<div>جاري التحميل...</div>}>
+            <AuthForm />
+          </Suspense>
         </div>
       </div>
 
-      {/* الجانب الأيسر (صورة وتفاصيل المنصة) - يختفي في الشاشات الصغيرة */}
+      {/* الجانب الأيسر (صورة وتفاصيل المنصة) */}
       <div className="hidden lg:flex flex-1 relative bg-slate-900 items-center justify-center p-12 overflow-hidden">
         {/* خلفية جمالية */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#391e75]/90 to-[#00a88f]/90 mix-blend-multiply"></div>
