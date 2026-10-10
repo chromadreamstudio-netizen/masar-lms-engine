@@ -232,9 +232,9 @@ export default async function InstructorDashboard() {
                       </span>
                     </td>
                     <td className="p-4 text-left">
-                      <button className="text-slate-400 hover:text-white transition-colors text-xs font-bold bg-slate-800 px-3 py-2 rounded-lg">
-                        تعديل الكورس
-                      </button>
+                      <Link href={`/instructor/courses/${course.id}`} className="text-slate-400 hover:text-white transition-colors text-xs font-bold bg-slate-800 px-3 py-2 rounded-lg">
+                        إدارة المنهج
+                      </Link>
                     </td>
                   </tr>
                 ))}
