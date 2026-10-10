@@ -17,20 +17,20 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [isAddingModule, setIsAddingModule] = useState(false);
 
-  // حالات نافذة رفع الفيديو (Upload Modal)
+  // حالات نافذة رفع الفيديو
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [lessonTitle, setLessonTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // جلب البيانات
   useEffect(() => {
     const fetchCourseData = async () => {
       const resolvedParams = await params;
@@ -58,7 +58,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     fetchCourseData();
   }, [params, supabase]);
 
-  // إضافة فصل (Module)
   const handleAddModule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newModuleTitle.trim()) return;
@@ -76,69 +75,97 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     setIsAddingModule(false);
   };
 
-  // فتح نافذة الدرس
   const openLessonModal = (moduleId: string) => {
     setActiveModuleId(moduleId);
     setLessonTitle('');
     setSelectedFile(null);
     setUploadProgress(0);
+    setUploadError(null);
     setIsModalOpen(true);
   };
 
-  // معالجة رفع الدرس (UX Simulation & DB Insert)
+  // ==========================================
+  // عملية الرفع الحقيقية المباشرة لـ Bunny.net
+  // ==========================================
   const handleUploadLesson = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lessonTitle || !selectedFile || !activeModuleId) return;
 
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadError(null);
+    setUploadProgress(1); // إظهار شريط التقدم
 
-    // 1. محاكاة تقدم الرفع (لإعطاء تجربة مستخدم مبهرة)
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 15;
+    try {
+      // 1. إخبار سيرفرنا بإنشاء مساحة للفيديو في Bunny.net
+      const createRes = await fetch('/api/videos/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: lessonTitle })
       });
-    }, 400);
+      
+      const resData = await createRes.json();
+      if (!createRes.ok) throw new Error(resData.error || 'فشل تهيئة الفيديو');
 
-    // 2. تسجيل الدرس في قاعدة بيانات Supabase
-    // هنا سنحفظ video_id وهمي لحين ربط الـ API الفعلي لـ Bunny.net
-    const currentModule = modules.find(m => m.id === activeModuleId);
-    const newOrder = currentModule?.lessons?.length || 0;
-    const dummyBunnyVideoId = 'bunny_' + Date.now().toString();
+      const { videoId, libraryId, uploadKey } = resData;
 
-    const { data: newLesson, error } = await supabase
-      .from('lessons')
-      .insert([{ 
-        module_id: activeModuleId, 
-        title: lessonTitle, 
-        order_index: newOrder,
-        video_url: dummyBunnyVideoId, // هذا الرقم سيستخدمه Bunny Player لاحقاً
-        is_free_preview: false
-      }])
-      .select().single();
-
-    clearInterval(interval);
-    setUploadProgress(100);
-
-    // تحديث الواجهة لتظهر الدرس الجديد فوراً
-    if (newLesson) {
-      setModules(modules.map(mod => {
-        if (mod.id === activeModuleId) {
-          return { ...mod, lessons: [...mod.lessons, newLesson] };
+      // 2. رفع الملف مباشرة من متصفح المستخدم إلى Bunny.net
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(Math.round(percentComplete));
         }
-        return mod;
-      }));
-    }
+      };
 
-    // إغلاق النافذة بعد ثانية
-    setTimeout(() => {
+      xhr.onload = async () => {
+        if (xhr.status === 200 || xhr.status === 201) {
+          // 3. الرفع نجح! نقوم بحفظ الـ videoId في قاعدة بيانات Supabase
+          const currentModule = modules.find(m => m.id === activeModuleId);
+          const newOrder = currentModule?.lessons?.length || 0;
+
+          const { data: newLesson, error } = await supabase
+            .from('lessons')
+            .insert([{ 
+              module_id: activeModuleId, 
+              title: lessonTitle, 
+              order_index: newOrder,
+              video_url: videoId, // هذا الرقم هو الأهم!
+              is_free_preview: false
+            }])
+            .select().single();
+
+          if (error) throw error;
+
+          // تحديث الواجهة فوراً
+          setModules(modules.map(mod => {
+            if (mod.id === activeModuleId) {
+              return { ...mod, lessons: [...mod.lessons, newLesson] };
+            }
+            return mod;
+          }));
+
+          setIsUploading(false);
+          setIsModalOpen(false);
+        } else {
+          throw new Error('فشل الرفع لـ Bunny.net');
+        }
+      };
+
+      xhr.onerror = () => {
+        setUploadError('حدث خطأ في الاتصال أثناء الرفع.');
+        setIsUploading(false);
+      };
+
+      // تنفيذ طلب الرفع المباشر
+      xhr.open('PUT', `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`);
+      xhr.setRequestHeader('AccessKey', uploadKey);
+      xhr.send(selectedFile);
+
+    } catch (err: any) {
+      setUploadError(err.message);
       setIsUploading(false);
-      setIsModalOpen(false);
-    }, 800);
+    }
   };
 
   if (isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-[#00a88f] w-12 h-12" /></div>;
@@ -146,7 +173,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 dir-rtl font-sans relative" dir="rtl">
       
-      {/* الترويسة العلوية */}
       <header className="max-w-5xl mx-auto mb-10 border-b border-slate-800 pb-6">
         <Link href="/instructor" className="inline-flex items-center gap-2 text-slate-400 hover:text-[#00a88f] transition-colors mb-4 text-sm font-bold">
           <ArrowRight size={16} /> العودة للوحة التحكم
@@ -154,7 +180,7 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-white">{course?.title}</h1>
-            <p className="text-slate-400 text-sm mt-1">إدارة المنهج ورفع الفيديوهات إلى Bunny.net DRM</p>
+            <p className="text-slate-400 text-sm mt-1">إدارة المنهج ورفع الفيديوهات المشفرة (Bunny.net DRM)</p>
           </div>
           <div className="flex gap-3">
             <button className="px-5 py-2.5 rounded-xl bg-[#00a88f] hover:bg-[#008f7a] text-white font-bold text-sm transition flex items-center gap-2 shadow-lg shadow-[#00a88f]/20">
@@ -166,7 +192,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
 
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* بناء المنهج */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
@@ -190,11 +215,10 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                           <PlayCircle size={16} className="text-[#00a88f]" />
                           <span className="text-sm font-medium text-slate-300">{lesson.title}</span>
                         </div>
-                        <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">تم الرفع ✓</span>
+                        <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">تم الرفع لـ Bunny ✓</span>
                       </div>
                     ))}
 
-                    {/* زر فتح نافذة الرفع */}
                     <button 
                       onClick={() => openLessonModal(module.id)}
                       className="w-full mt-2 border border-dashed border-slate-700 hover:border-[#00a88f] hover:bg-[#00a88f]/5 text-slate-400 hover:text-[#00a88f] p-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all"
@@ -206,7 +230,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
               ))}
             </div>
 
-            {/* إضافة فصل جديد */}
             <form onSubmit={handleAddModule} className="bg-slate-950 p-4 rounded-xl border border-slate-800">
               <label className="block text-xs font-bold text-slate-400 mb-2">عنوان الفصل الجديد</label>
               <div className="flex gap-3">
@@ -225,7 +248,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
           </div>
         </div>
 
-        {/* إحصائيات جانبية */}
         <div className="space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <h3 className="font-bold text-white mb-4">تفاصيل المنهج</h3>
@@ -245,27 +267,21 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {/* ========================================= */}
-      {/* نافذة رفع الفيديو (Upload Video Modal) */}
-      {/* ========================================= */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
             
-            {/* رأس النافذة */}
             <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-800/50">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Video className="text-[#00a88f]" size={20} /> رفع درس جديد
+                <Video className="text-[#00a88f]" size={20} /> رفع درس لـ Bunny.net
               </h3>
               <button onClick={() => !isUploading && setIsModalOpen(false)} className="text-slate-400 hover:text-white transition">
                 <X size={20} />
               </button>
             </div>
 
-            {/* نموذج الرفع */}
             <form onSubmit={handleUploadLesson} className="p-6">
               <div className="space-y-5">
-                
                 <div>
                   <label className="block text-sm font-bold text-slate-300 mb-2">عنوان الدرس</label>
                   <input
@@ -282,22 +298,27 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                 <div>
                   <label className="block text-sm font-bold text-slate-300 mb-2">ملف الفيديو</label>
                   <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${selectedFile ? 'border-[#00a88f] bg-[#00a88f]/5' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800'}`}>
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                       <UploadCloud className={`w-8 h-8 mb-2 ${selectedFile ? 'text-[#00a88f]' : 'text-slate-400'}`} />
-                      <p className="text-sm text-slate-300 font-bold">
+                      <p className="text-sm text-slate-300 font-bold truncate w-full">
                         {selectedFile ? selectedFile.name : 'اضغط لاختيار فيديو من جهازك'}
                       </p>
-                      {!selectedFile && <p className="text-xs text-slate-500 mt-1">MP4, WebM (تشفير DRM تلقائي)</p>}
+                      {!selectedFile && <p className="text-xs text-slate-500 mt-1">يتم التشفير والرفع الآمن مباشرة لـ Bunny Stream</p>}
                     </div>
-                    <input type="file" accept="video/mp4,video/webm" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} disabled={isUploading} required />
+                    <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} disabled={isUploading} required />
                   </label>
                 </div>
 
-                {/* شريط التقدم */}
+                {uploadError && (
+                   <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-sm p-3 rounded-xl font-bold">
+                     {uploadError}
+                   </div>
+                )}
+
                 {isUploading && (
                   <div className="space-y-2 mt-4">
                     <div className="flex justify-between text-xs font-bold text-[#00a88f]">
-                      <span>جاري الرفع لـ Bunny.net...</span>
+                      <span>جاري الرفع الحقيقي... الرجاء عدم إغلاق النافذة</span>
                       <span>{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
@@ -307,14 +328,13 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                 )}
               </div>
 
-              {/* أزرار النافذة */}
               <div className="mt-8 flex gap-3">
                 <button
                   type="submit"
                   disabled={isUploading || !lessonTitle || !selectedFile}
-                  className="flex-1 bg-[#00a88f] hover:bg-[#008f7a] text-white py-3 rounded-xl font-bold transition shadow-lg disabled:opacity-50 flex justify-center"
+                  className="flex-1 bg-[#00a88f] hover:bg-[#008f7a] text-white py-3 rounded-xl font-bold transition shadow-lg disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'بدء الرفع والحفظ'}
+                  {isUploading ? <><Loader2 className="w-5 h-5 animate-spin" /> جاري الرفع...</> : 'بدء الرفع الآمن'}
                 </button>
               </div>
             </form>
