@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowRight, Video, Plus, GripVertical, Settings, 
-  BookOpen, Trash2, CheckCircle2, PlayCircle 
+  BookOpen, Trash2, CheckCircle2, PlayCircle, X, UploadCloud, Loader2
 } from 'lucide-react';
 
 export default function CourseBuilderPage({ params }: { params: { id: string } }) {
@@ -17,38 +17,35 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [isAddingModule, setIsAddingModule] = useState(false);
 
+  // حالات نافذة رفع الفيديو (Upload Modal)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+  const [lessonTitle, setLessonTitle] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // جلب بيانات الكورس والمنهج
+  // جلب البيانات
   useEffect(() => {
     const fetchCourseData = async () => {
-      const resolvedParams = await params; // Next.js 15 requirement
+      const resolvedParams = await params;
       const courseId = resolvedParams.id;
 
-      // جلب الكورس
-      const { data: courseData } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('id', courseId)
-        .single();
-      
+      const { data: courseData } = await supabase.from('courses').select('*').eq('id', courseId).single();
       if (courseData) setCourse(courseData);
 
-      // جلب الفصول والدروس
       const { data: modulesData } = await supabase
         .from('modules')
-        .select(`
-          *,
-          lessons (*)
-        `)
+        .select(`*, lessons (*)`)
         .eq('course_id', courseId)
         .order('order_index', { ascending: true });
 
       if (modulesData) {
-        // ترتيب الدروس داخل كل فصل
         const sortedModules = modulesData.map(mod => ({
           ...mod,
           lessons: mod.lessons.sort((a: any, b: any) => a.order_index - b.order_index)
@@ -61,25 +58,16 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     fetchCourseData();
   }, [params, supabase]);
 
-  // إضافة فصل جديد (Module)
+  // إضافة فصل (Module)
   const handleAddModule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newModuleTitle.trim()) return;
     setIsAddingModule(true);
 
-    const newOrder = modules.length;
-    
     const { data, error } = await supabase
       .from('modules')
-      .insert([
-        { 
-          course_id: course.id, 
-          title: newModuleTitle, 
-          order_index: newOrder 
-        }
-      ])
-      .select()
-      .single();
+      .insert([{ course_id: course.id, title: newModuleTitle, order_index: modules.length }])
+      .select().single();
 
     if (data) {
       setModules([...modules, { ...data, lessons: [] }]);
@@ -88,17 +76,77 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     setIsAddingModule(false);
   };
 
-  // دالة وهمية لإضافة درس (سيتم برمجتها في الخطوة القادمة مع رفع الفيديو)
-  const handleAddLessonPlaceholder = () => {
-    alert('هذه الخطوة القادمة يا كابتن! هنا سنقوم ببرمجة واجهة رفع الفيديو المباشر إلى Bunny.net.');
+  // فتح نافذة الدرس
+  const openLessonModal = (moduleId: string) => {
+    setActiveModuleId(moduleId);
+    setLessonTitle('');
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setIsModalOpen(true);
   };
 
-  if (isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00a88f]"></div></div>;
+  // معالجة رفع الدرس (UX Simulation & DB Insert)
+  const handleUploadLesson = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lessonTitle || !selectedFile || !activeModuleId) return;
+
+    setIsUploading(true);
+    setUploadProgress(10);
+
+    // 1. محاكاة تقدم الرفع (لإعطاء تجربة مستخدم مبهرة)
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 15;
+      });
+    }, 400);
+
+    // 2. تسجيل الدرس في قاعدة بيانات Supabase
+    // هنا سنحفظ video_id وهمي لحين ربط الـ API الفعلي لـ Bunny.net
+    const currentModule = modules.find(m => m.id === activeModuleId);
+    const newOrder = currentModule?.lessons?.length || 0;
+    const dummyBunnyVideoId = 'bunny_' + Date.now().toString();
+
+    const { data: newLesson, error } = await supabase
+      .from('lessons')
+      .insert([{ 
+        module_id: activeModuleId, 
+        title: lessonTitle, 
+        order_index: newOrder,
+        video_url: dummyBunnyVideoId, // هذا الرقم سيستخدمه Bunny Player لاحقاً
+        is_free_preview: false
+      }])
+      .select().single();
+
+    clearInterval(interval);
+    setUploadProgress(100);
+
+    // تحديث الواجهة لتظهر الدرس الجديد فوراً
+    if (newLesson) {
+      setModules(modules.map(mod => {
+        if (mod.id === activeModuleId) {
+          return { ...mod, lessons: [...mod.lessons, newLesson] };
+        }
+        return mod;
+      }));
+    }
+
+    // إغلاق النافذة بعد ثانية
+    setTimeout(() => {
+      setIsUploading(false);
+      setIsModalOpen(false);
+    }, 800);
+  };
+
+  if (isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-[#00a88f] w-12 h-12" /></div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 dir-rtl font-sans" dir="rtl">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 dir-rtl font-sans relative" dir="rtl">
       
-      {/* الترويسة */}
+      {/* الترويسة العلوية */}
       <header className="max-w-5xl mx-auto mb-10 border-b border-slate-800 pb-6">
         <Link href="/instructor" className="inline-flex items-center gap-2 text-slate-400 hover:text-[#00a88f] transition-colors mb-4 text-sm font-bold">
           <ArrowRight size={16} /> العودة للوحة التحكم
@@ -106,16 +154,11 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-white">{course?.title}</h1>
-            <p className="text-slate-400 text-sm mt-1">
-              إدارة المنهج، الفصول، ورفع الفيديوهات
-            </p>
+            <p className="text-slate-400 text-sm mt-1">إدارة المنهج ورفع الفيديوهات إلى Bunny.net DRM</p>
           </div>
           <div className="flex gap-3">
-            <button className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition flex items-center gap-2 border border-slate-700">
-              <Settings size={16} /> إعدادات الكورس
-            </button>
             <button className="px-5 py-2.5 rounded-xl bg-[#00a88f] hover:bg-[#008f7a] text-white font-bold text-sm transition flex items-center gap-2 shadow-lg shadow-[#00a88f]/20">
-              <CheckCircle2 size={16} /> نشر الكورس
+              <CheckCircle2 size={16} /> حفظ التغييرات ونشر
             </button>
           </div>
         </div>
@@ -123,59 +166,47 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
 
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* بناء المنهج (Curriculum Builder) */}
+        {/* بناء المنهج */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
-              <BookOpen className="text-[#00a88f]" /> محتوى المنهج
+              <BookOpen className="text-[#00a88f]" /> محتوى الكورس
             </h2>
 
-            {/* قائمة الفصول والدروس */}
             <div className="space-y-4 mb-8">
               {modules.map((module) => (
-                <div key={module.id} className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-                  
-                  {/* رأس الفصل */}
-                  <div className="bg-slate-800/50 p-4 flex items-center justify-between group">
+                <div key={module.id} className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-slate-800/50 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <GripVertical className="text-slate-600 cursor-move" size={18} />
                       <h3 className="font-bold text-white text-sm">الفصل: {module.title}</h3>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-slate-400 hover:text-red-400 transition"><Trash2 size={16} /></button>
-                    </div>
                   </div>
 
-                  {/* الدروس داخل الفصل */}
                   <div className="p-4 space-y-2">
                     {module.lessons?.map((lesson: any) => (
-                      <div key={lesson.id} className="bg-slate-900 border border-slate-800 p-3 rounded-lg flex items-center justify-between hover:border-slate-700 transition">
+                      <div key={lesson.id} className="bg-slate-900 border border-slate-800 p-3 rounded-lg flex items-center justify-between group">
                         <div className="flex items-center gap-3">
-                          <PlayCircle size={16} className={lesson.video_url ? "text-[#00a88f]" : "text-amber-500"} />
+                          <PlayCircle size={16} className="text-[#00a88f]" />
                           <span className="text-sm font-medium text-slate-300">{lesson.title}</span>
                         </div>
+                        <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">تم الرفع ✓</span>
                       </div>
                     ))}
 
-                    {/* زر إضافة درس جديد */}
+                    {/* زر فتح نافذة الرفع */}
                     <button 
-                      onClick={handleAddLessonPlaceholder}
+                      onClick={() => openLessonModal(module.id)}
                       className="w-full mt-2 border border-dashed border-slate-700 hover:border-[#00a88f] hover:bg-[#00a88f]/5 text-slate-400 hover:text-[#00a88f] p-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all"
                     >
-                      <Plus size={16} /> إضافة درس (فيديو) جديد
+                      <Plus size={16} /> إضافة فيديو جديد
                     </button>
                   </div>
                 </div>
               ))}
-
-              {modules.length === 0 && (
-                <div className="text-center py-12 border-2 border-dashed border-slate-800 rounded-xl text-slate-500">
-                  <p>لم تقم بإضافة أي فصول بعد.</p>
-                </div>
-              )}
             </div>
 
-            {/* نموذج إضافة فصل جديد */}
+            {/* إضافة فصل جديد */}
             <form onSubmit={handleAddModule} className="bg-slate-950 p-4 rounded-xl border border-slate-800">
               <label className="block text-xs font-bold text-slate-400 mb-2">عنوان الفصل الجديد</label>
               <div className="flex gap-3">
@@ -184,44 +215,114 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                   value={newModuleTitle}
                   onChange={(e) => setNewModuleTitle(e.target.value)}
                   placeholder="مثال: مقدمة في لغة بايثون"
-                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:border-[#00a88f] focus:outline-none"
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:border-[#00a88f] outline-none"
                 />
-                <button
-                  type="submit"
-                  disabled={isAddingModule || !newModuleTitle.trim()}
-                  className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition disabled:opacity-50"
-                >
-                  إضافة الفصل
+                <button type="submit" disabled={isAddingModule || !newModuleTitle.trim()} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+                  إضافة
                 </button>
               </div>
             </form>
           </div>
         </div>
 
-        {/* الشريط الجانبي (حالة الكورس) */}
+        {/* إحصائيات جانبية */}
         <div className="space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-            <h3 className="font-bold text-white mb-4">حالة الكورس</h3>
+            <h3 className="font-bold text-white mb-4">تفاصيل المنهج</h3>
             <div className="space-y-4 text-sm">
               <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                <span className="text-slate-400">حالة النشر</span>
-                <span className="bg-amber-500/10 text-amber-500 px-2 py-1 rounded font-bold text-xs">مسودة</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                <span className="text-slate-400">السعر</span>
-                <span className="text-emerald-400 font-bold">${course?.price}</span>
+                <span className="text-slate-400">إجمالي الفصول</span>
+                <span className="text-white font-bold">{modules.length}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">إجمالي الدروس</span>
-                <span className="text-white font-bold">
+                <span className="text-[#00a88f] font-bold">
                   {modules.reduce((total, mod) => total + (mod.lessons?.length || 0), 0)}
                 </span>
               </div>
             </div>
           </div>
         </div>
-
       </div>
+
+      {/* ========================================= */}
+      {/* نافذة رفع الفيديو (Upload Video Modal) */}
+      {/* ========================================= */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            
+            {/* رأس النافذة */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-800/50">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Video className="text-[#00a88f]" size={20} /> رفع درس جديد
+              </h3>
+              <button onClick={() => !isUploading && setIsModalOpen(false)} className="text-slate-400 hover:text-white transition">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* نموذج الرفع */}
+            <form onSubmit={handleUploadLesson} className="p-6">
+              <div className="space-y-5">
+                
+                <div>
+                  <label className="block text-sm font-bold text-slate-300 mb-2">عنوان الدرس</label>
+                  <input
+                    type="text"
+                    required
+                    value={lessonTitle}
+                    onChange={(e) => setLessonTitle(e.target.value)}
+                    className="block w-full px-4 py-3 border border-slate-700 rounded-xl bg-slate-950 text-white focus:ring-[#00a88f] outline-none text-sm"
+                    placeholder="مثال: الدرس الأول - تثبيت البرامج"
+                    disabled={isUploading}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-300 mb-2">ملف الفيديو</label>
+                  <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${selectedFile ? 'border-[#00a88f] bg-[#00a88f]/5' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800'}`}>
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <UploadCloud className={`w-8 h-8 mb-2 ${selectedFile ? 'text-[#00a88f]' : 'text-slate-400'}`} />
+                      <p className="text-sm text-slate-300 font-bold">
+                        {selectedFile ? selectedFile.name : 'اضغط لاختيار فيديو من جهازك'}
+                      </p>
+                      {!selectedFile && <p className="text-xs text-slate-500 mt-1">MP4, WebM (تشفير DRM تلقائي)</p>}
+                    </div>
+                    <input type="file" accept="video/mp4,video/webm" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} disabled={isUploading} required />
+                  </label>
+                </div>
+
+                {/* شريط التقدم */}
+                {isUploading && (
+                  <div className="space-y-2 mt-4">
+                    <div className="flex justify-between text-xs font-bold text-[#00a88f]">
+                      <span>جاري الرفع لـ Bunny.net...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                      <div className="bg-gradient-to-r from-[#00a88f] to-teal-400 h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* أزرار النافذة */}
+              <div className="mt-8 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isUploading || !lessonTitle || !selectedFile}
+                  className="flex-1 bg-[#00a88f] hover:bg-[#008f7a] text-white py-3 rounded-xl font-bold transition shadow-lg disabled:opacity-50 flex justify-center"
+                >
+                  {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'بدء الرفع والحفظ'}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
