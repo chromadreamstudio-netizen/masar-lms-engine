@@ -49,7 +49,7 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       const { data: courseData } = await supabase.from('courses').select('*').eq('id', courseId).single();
       if (courseData) setCourse(courseData);
 
-      // جلب إعدادات الذكاء الاصطناعي (تم تصحيح الثغرة هنا باستخدام maybeSingle)
+      // جلب إعدادات الذكاء الاصطناعي 
       const { data: aiData, error: aiError } = await supabase
         .from('course_ai_settings')
         .select('*')
@@ -154,7 +154,11 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       xhr.open('PUT', `https://video.bunnycdn.com/library/${resData.libraryId}/videos/${resData.videoId}`);
       xhr.setRequestHeader('AccessKey', resData.uploadKey);
       xhr.send(selectedFile);
-    } catch (err) { setIsUploading(false); alert('خطأ في الرفع'); }
+    } catch (err: any) { 
+      setIsUploading(false); 
+      // تم تعديل رسالة الخطأ هنا لتكون مفصلة للتتبع
+      alert('فشل الرفع: ' + err.message); 
+    }
   };
 
   if (isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-[#00a88f] w-12 h-12" /></div>;
@@ -233,7 +237,8 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                             <PlayCircle size={16} className="text-[#00a88f]" />
                             <span className="text-sm font-medium text-slate-300">{lesson.title}</span>
                           </div>
-                          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">Bunny DRM ✓</span>
+                          {/* تم تغيير النص هنا من Bunny DRM */}
+                          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">فيديو محمي ✓</span>
                         </div>
                       ))}
                       <button onClick={() => openLessonModal(module.id)} className="w-full mt-2 border border-dashed border-slate-700 hover:border-[#00a88f] hover:bg-[#00a88f]/5 text-slate-400 hover:text-[#00a88f] p-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all">
@@ -330,7 +335,8 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
             <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-800/50">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Video className="text-[#00a88f]" size={20} /> رفع درس لـ Bunny.net</h3>
+              {/* تم تغيير النص هنا من رفع درس لـ Bunny.net */}
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Video className="text-[#00a88f]" size={20} /> الرفع الآمن للدرس</h3>
               <button onClick={() => !isUploading && setIsModalOpen(false)} className="text-slate-400 hover:text-white transition"><X size={20} /></button>
             </div>
             <form onSubmit={handleUploadLesson} className="p-6">
