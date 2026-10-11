@@ -7,7 +7,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { 
   Search, Shield, MonitorPlay, ArrowRight, Check, ChevronDown, 
   Sparkles, BrainCircuit, Code, Palette, Briefcase, 
-  LayoutDashboard, LogOut, Loader2, Lock, Globe, Mail
+  LayoutDashboard, LogOut, Loader2, Lock, Globe, Mail, Star, PlayCircle
 } from 'lucide-react';
 
 export default function GlobalPlatformHome() {
@@ -56,51 +56,51 @@ export default function GlobalPlatformHome() {
   };
 
   const faqs = [
-    { q: 'كيف يعمل المعلم الذكي (AI Tutor) في مسار؟', a: 'يتم تدريب المعلم الذكي حصرياً على المادة العلمية الخاصة بكل كورس بواسطة المحاضر للإجابة على استفسارات الطلاب بدقة.' },
-    { q: 'هل يمكنني الانضمام كصانع محتوى (محاضر)؟', a: 'نعم بالتأكيد، توفر لك مسار أدوات متكاملة لحماية محتواك وبيع كورساتك بحرية.' },
-    { q: 'هل الفيديوهات محمية من السرقة؟', a: 'نعم، نستخدم تقنيات التشفير المتقدمة (DRM) بالتعاون مع أفضل شبكات البث لحماية المحتوى.' }
+    { q: 'كيف يعمل المعلم الذكي (AI Tutor) في مسار؟', a: 'يتم تدريب المعلم الذكي حصرياً على المادة العلمية الخاصة بكل كورس بواسطة المحاضر للإجابة على استفسارات الطلاب بدقة، وإرشادهم للدقيقة المناسبة داخل الدرس.' },
+    { q: 'هل يمكنني الانضمام كصانع محتوى (محاضر)؟', a: 'نعم بالتأكيد، توفر لك مسار أدوات متكاملة لحماية محتواك بتشفير DRM وبيع كورساتك بحرية مع لوحة تحكم مالية دقيقة.' },
+    { q: 'هل الفيديوهات محمية من السرقة؟', a: 'نعم، نستخدم تقنيات التشفير المتقدمة (DRM) بالتعاون مع Bunny.net لمنع تحميل أو تسريب المحتوى التعليمي.' }
   ];
 
   const categories = [
-    { title: 'البرمجة والتطوير', icon: <Code size={24} />, count: '١٢٠+ كورس' },
-    { title: 'الذكاء الاصطناعي', icon: <BrainCircuit size={24} />, count: '٤٥+ كورس' },
-    { title: 'التصميم والجرافيك', icon: <Palette size={24} />, count: '٨٠+ كورس' },
-    { title: 'ريادة الأعمال', icon: <Briefcase size={24} />, count: '٦٠+ كورس' },
+    { title: 'البرمجة والتطوير', icon: <Code size={24} />, count: '١٢٠+ كورس', desc: 'تطوير الويب، التطبيقات، والخوارزميات' },
+    { title: 'الذكاء الاصطناعي', icon: <BrainCircuit size={24} />, count: '٤٥+ كورس', desc: 'هندسة الأوامر وتعلم الآلة' },
+    { title: 'التصميم والجرافيك', icon: <Palette size={24} />, count: '٨٠+ كورس', desc: 'UI/UX وتصميم واجهات المستخدم' },
+    { title: 'ريادة الأعمال', icon: <Briefcase size={24} />, count: '٦٠+ كورس', desc: 'إدارة المشاريع والتسويق الرقمي' },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#ffffff', color: '#000000', fontFamily: 'system-ui, sans-serif' }} dir="rtl">
+    <div className="min-h-screen bg-white text-[#000000] font-sans dir-rtl" dir="rtl">
       
-      {/* Header */}
-      <header style={{ borderBottom: '1px solid #f2f2f2', backgroundColor: '#ffffff', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-            <Link href="/" style={{ fontWeight: 'bold', color: '#08090a', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-              <Sparkles style={{ color: '#0c8c5e' }} size={20} />
-              <span style={{ fontSize: '18px' }}>MASAR</span>
+      {/* 1. Header (Mintlify Style) */}
+      <header className="border-b border-[#f2f2f2] bg-white sticky top-0 z-50">
+        <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="font-bold text-[#08090a] flex items-center gap-2 tracking-tight">
+              <span className="text-[#0c8c5e] text-xl font-black">MASAR</span>
             </Link>
-            <nav style={{ display: 'flex', gap: '24px', fontSize: '14px', fontWeight: 500 }}>
-              <Link href="/courses" style={{ color: '#08090a', textDecoration: 'none' }}>تصفح الكورسات</Link>
-              <Link href="/login?redirect=/instructor" style={{ color: '#08090a', textDecoration: 'none' }}>التدريس في مسار</Link>
+            <nav className="hidden md:flex items-center gap-6 text-[14px] font-medium text-[#08090a]/80">
+              <Link href="/courses" className="hover:text-[#0c8c5e] transition-colors">تصفح الكورسات</Link>
+              <Link href="#features" className="hover:text-[#0c8c5e] transition-colors">المميزات السحرية</Link>
+              <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="hover:text-[#0c8c5e] transition-colors">التدريس في مسار</Link>
             </nav>
           </div>
 
-          <div>
+          <div className="flex items-center gap-4">
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                 <Link href="/dashboard" style={{ fontSize: '14px', fontWeight: 500, color: '#08090a', textDecoration: 'none', padding: '8px 16px', background: '#f2f2f2', borderRadius: '4px' }}>
-                    لوحة التحكم
+              <div className="flex items-center gap-3 border-r border-[#f2f2f2] pr-4">
+                 <Link href="/dashboard" className="text-[14px] font-medium text-[#08090a] hover:bg-[#f2f2f2] px-4 py-2 rounded-[4px] transition-colors flex items-center gap-2">
+                    <LayoutDashboard size={16} /> لوحتي
                   </Link>
-                  <button onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'red', padding: '8px' }}>
-                    <LogOut size={18} />
+                  <button onClick={handleSignOut} className="text-[14px] font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-[4px] transition-colors">
+                    <LogOut size={16} />
                   </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Link href="/login" style={{ fontSize: '14px', fontWeight: 500, color: '#08090a', textDecoration: 'none', padding: '8px 16px' }}>
-                  دخول
+              <div className="flex items-center gap-3">
+                <Link href="/login" className="text-[14px] font-medium text-[#08090a] hover:bg-[#f2f2f2] px-4 py-2 rounded-[4px] transition-colors">
+                  تسجيل الدخول
                 </Link>
-                <Link href="/login" style={{ fontSize: '14px', fontWeight: 500, backgroundColor: '#08090a', color: '#ffffff', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none' }}>
+                <Link href="/login" className="text-[14px] font-medium bg-[#08090a] text-white px-4 py-2 rounded-[4px] shadow-sm hover:opacity-90 transition-opacity">
                   ابدأ مجاناً
                 </Link>
               </div>
@@ -110,123 +110,233 @@ export default function GlobalPlatformHome() {
       </header>
 
       <main>
-        {/* Hero Section */}
-        <section style={{ padding: '80px 24px', textAlign: 'center', borderBottom: '1px solid #f2f2f2', background: 'linear-gradient(to bottom, rgba(12, 140, 94, 0.03), #ffffff)' }}>
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'inline-block', backgroundColor: '#ffffff', border: '1px solid #f2f2f2', color: '#0c8c5e', padding: '6px 16px', borderRadius: '50px', fontSize: '13px', fontWeight: 600, marginBottom: '24px' }}>
-              الجيل الجديد من التعليم المدعوم بالذكاء الاصطناعي
+        {/* 2. Hero Section (Mintlify Dark Teal/Mint Aesthetic with Product Showcase) */}
+        <section className="relative pt-20 pb-32 overflow-hidden bg-gradient-to-br from-[#0c8c5e] via-[#085b3d] to-[#08090a] text-white">
+          <div className="max-w-[1200px] mx-auto px-6 text-center flex flex-col items-center relative z-10">
+            
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium px-4 py-1.5 rounded-full text-[13px] mb-8 tracking-[0.05em] uppercase">
+              <span className="w-2 h-2 rounded-full bg-[#0c8c5e] animate-pulse"></span>
+              المنصة التعليمية الأولى المدعومة بالذكاء الاصطناعي
             </div>
-            <h1 style={{ fontSize: '48px', fontWeight: 700, color: '#08090a', lineHeight: 1.2, marginBottom: '24px', letterSpacing: '-0.02em' }}>
-              تعلم، وعَلِّم، بذكاء لم يسبق له مثيل.
+
+            <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight max-w-4xl mb-6 text-white">
+              تعلم، وعَلِّم، بذكاء <br /> لم يسبق له مثيل.
             </h1>
-            <p style={{ fontSize: '18px', color: '#555555', lineHeight: 1.6, marginBottom: '40px' }}>
-              المنصة التعليمية الأولى التي تدمج التشفير العسكري للمحتوى مع سحر الذكاء الاصطناعي التفاعلي لكل طالب ومدرس.
+            <p className="text-lg text-white/80 max-w-2xl mb-10 leading-relaxed">
+              تدمج منصة مسار التشفير العسكري للمحتوى مع سحر الذكاء الاصطناعي التفاعلي لتجربة تعليمية فريدة من نوعها.
             </p>
             
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', fontSize: '14px', fontWeight: 500, color: '#666666' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Shield size={16} style={{ color: '#0c8c5e' }} /> حماية DRM</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BrainCircuit size={16} style={{ color: '#0c8c5e' }} /> المعلم الذكي</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><MonitorPlay size={16} style={{ color: '#0c8c5e' }} /> وصول مدى الحياة</span>
+            <div className="relative w-full max-w-xl mx-auto flex items-center bg-white rounded-[4px] p-1.5 shadow-2xl">
+               <Search size={20} className="text-black/40 mr-3" />
+               <input
+                  type="text"
+                  placeholder="ابحث عن مهارة، لغة برمجة، أو تخصص..."
+                  className="w-full py-3 px-3 text-[15px] text-[#08090a] outline-none bg-transparent text-right"
+                />
+                <button className="bg-[#08090a] text-white h-12 px-8 text-[14px] font-medium rounded-[4px] hover:opacity-90 transition-opacity shrink-0">
+                  بحث سريح
+                </button>
+            </div>
+            
+            <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-[14px] text-white/80 font-medium">
+              <span className="flex items-center gap-2"><Shield size={16} className="text-[#4ade80]" /> حماية سينمائية DRM</span>
+              <span className="flex items-center gap-2"><BrainCircuit size={16} className="text-[#4ade80]" /> معلم ذكي لكل كورس</span>
+              <span className="flex items-center gap-2"><MonitorPlay size={16} className="text-[#4ade80]" /> وصول مدى الحياة</span>
             </div>
           </div>
-        </section>
 
-        {/* Categories Section */}
-        <section style={{ padding: '80px 24px', maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#08090a', marginBottom: '32px' }}>
-            استكشف التصنيفات الرئيسية
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
-            {categories.map((cat, i) => (
-              <div key={i} style={{ border: '1px solid #f2f2f2', borderRadius: '16px', padding: '24px', backgroundColor: '#ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: '#f2f2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', color: '#0c8c5e' }}>
-                  {cat.icon}
+          {/* Floating Product Preview Card (Mintlify Signature) */}
+          <div className="max-w-[1000px] mx-auto px-6 mt-16 relative z-20">
+             <div className="bg-white rounded-[16px] shadow-2xl border border-white/20 p-6 text-black grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[#f2f2f2] p-4 rounded-[12px] flex flex-col justify-between">
+                   <div className="text-xs font-bold text-[#0c8c5e] uppercase tracking-wider">الفصل الأول</div>
+                   <div className="font-semibold text-sm mt-2">أساسيات البرمجة الذكية</div>
+                   <div className="text-xs text-black/60 mt-4 flex items-center gap-1"><PlayCircle size={14} className="text-[#0c8c5e]" /> فيديو محمي مشفر</div>
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#08090a', marginBottom: '8px' }}>{cat.title}</h3>
-                <p style={{ fontSize: '13px', color: '#777777' }}>{cat.count}</p>
-              </div>
-            ))}
+                <div className="bg-[#0c8c5e]/10 border border-[#0c8c5e]/20 p-4 rounded-[12px] md:col-span-2 flex flex-col justify-between">
+                   <div className="flex items-center gap-2 text-[#0c8c5e] font-semibold text-sm">
+                      <BrainCircuit size={18} /> المعلم الذكي (Gemini AI Tutor) متصل وجاهز للرد
+                   </div>
+                   <p className="text-xs text-black/70 mt-2">"كيف يمكنني تطبيق هذه الدالة في مشروع بايثون العملي؟"</p>
+                   <div className="bg-white p-3 rounded-[8px] text-xs text-black/90 mt-2 shadow-sm">
+                      يمكنك استخدامها مباشرة عبر استدعاء المكتبة كما موضح في الدقيقة 4:12 من الدرس...
+                   </div>
+                </div>
+             </div>
           </div>
         </section>
 
-        {/* Courses Section */}
-        <section style={{ padding: '80px 24px', maxWidth: '1200px', margin: '0 auto', borderTop: '1px solid #f2f2f2' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#08090a', marginBottom: '32px' }}>أحدث الكورسات المنشورة</h2>
-          
-          {isLoadingCourses ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-              <Loader2 className="animate-spin" style={{ color: '#0c8c5e', width: '32px', height: '32px' }} />
+        {/* 3. Categories Grid (Udemy Style) */}
+        <section className="py-24 bg-white">
+          <div className="max-w-[1200px] mx-auto px-6">
+            <div className="flex justify-between items-end mb-12">
+               <div>
+                  <div className="text-[13px] font-medium text-[#0c8c5e] uppercase tracking-[0.05em] mb-2">التصنيفات الرئيسية</div>
+                  <h2 className="text-3xl font-semibold text-[#08090a] tracking-tight">استكشف مجالات المستقبل</h2>
+               </div>
             </div>
-          ) : courses.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-              {courses.map((course) => (
-                <Link href={`/courses/${course.slug}`} key={course.id} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #f2f2f2', borderRadius: '16px', overflow: 'hidden', textDecoration: 'none', backgroundColor: '#ffffff' }}>
-                  <div style={{ aspectRatio: '16/9', backgroundColor: '#08090a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <MonitorPlay style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.3)' }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {categories.map((cat, i) => (
+                <div key={i} className="border border-[#f2f2f2] rounded-[16px] p-6 hover:border-[#dddddd] hover:shadow-sm transition-all bg-white cursor-pointer group">
+                  <div className="w-12 h-12 rounded-lg bg-[#f2f2f2] flex items-center justify-center mb-4 text-[#0c8c5e] group-hover:bg-[#0c8c5e] group-hover:text-white transition-colors">
+                    {cat.icon}
                   </div>
-                  <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#08090a', marginBottom: '8px' }}>
-                      {course.title}
-                    </h3>
-                    <p style={{ fontSize: '13px', color: '#777777', marginBottom: '16px' }}>{course.profiles?.full_name || 'مدرس معتمد'}</p>
-                    <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'between', paddingTop: '16px', borderTop: '1px solid #f2f2f2' }}>
-                      <span style={{ fontSize: '20px', fontWeight: 700, color: '#08090a' }}>
-                        {course.price > 0 ? `$${course.price}` : 'مجانــــاً'}
-                      </span>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#0c8c5e', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        التفاصيل <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                  <h3 className="text-[16px] font-semibold text-[#08090a] mb-1">{cat.title}</h3>
+                  <p className="text-[13px] text-black/60 mb-2">{cat.desc}</p>
+                  <span className="text-[12px] font-medium text-[#0c8c5e]">{cat.count}</span>
+                </div>
               ))}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px', border: '1px dashed #f2f2f2', borderRadius: '16px', color: '#777777' }}>
-              لا توجد كورسات متاحة حالياً.
-            </div>
-          )}
+          </div>
         </section>
 
-        {/* FAQ Section */}
-        <section style={{ padding: '80px 24px', maxWidth: '800px', margin: '0 auto', borderTop: '1px solid #f2f2f2' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#08090a', marginBottom: '32px', textAlign: 'center' }}>
-            الأسئلة الشائعة
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {faqs.map((faq, i) => (
-              <div key={i} style={{ border: '1px solid #f2f2f2', borderRadius: '16px', overflow: 'hidden' }}>
-                <button 
-                  onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                  style={{ width: '100%', textAlign: 'right', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '15px', color: '#08090a' }}
-                >
-                  <span>{faq.q}</span>
-                  <ChevronDown size={18} style={{ transform: activeFaq === i ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                </button>
-                {activeFaq === i && (
-                  <div style={{ padding: '0 24px 20px 24px', fontSize: '14px', lineHeight: 1.6, color: '#555555' }}>
-                    {faq.a}
-                  </div>
-                )}
+        {/* 4. Magic School AI Features Section */}
+        <section id="features" className="py-24 bg-[#0c8c5e]/[0.02] border-y border-[#f2f2f2]">
+          <div className="max-w-[1200px] mx-auto px-6">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <div className="text-[13px] font-medium text-[#0c8c5e] uppercase tracking-[0.05em] mb-4">
+                القوة السحرية للذكاء الاصطناعي
               </div>
-            ))}
+              <h2 className="text-3xl font-semibold text-[#08090a] tracking-tight">
+                أدوات خارقة للمدرس والطالب تتفوق على Udemy
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="bg-white border border-[#f2f2f2] rounded-[16px] p-8 shadow-sm">
+                <div className="text-[#0c8c5e] mb-6"><BrainCircuit size={32} strokeWidth={1.5} /></div>
+                <h3 className="text-[20px] font-semibold text-[#08090a] mb-3">معلم آلي تفاعلي لكل كورس</h3>
+                <p className="text-[15px] text-black/70 leading-relaxed">
+                  مساعد ذكي يرافق الطالب أثناء المشاهدة، يجيب على الأسئلة من صميم المادة العلمية، ويرشده لأوقات الشرح داخل الفيديو بدقة.
+                </p>
+              </div>
+              <div className="bg-white border border-[#f2f2f2] rounded-[16px] p-8 shadow-sm">
+                <div className="text-[#08090a] mb-6"><Shield size={32} strokeWidth={1.5} /></div>
+                <h3 className="text-[20px] font-semibold text-[#08090a] mb-3">حماية سينمائية DRM</h3>
+                <p className="text-[15px] text-black/70 leading-relaxed">
+                  نحمي محتواك الفكري بتقنيات تشفير قوية تمنع التحميل والإضافات غير القانونية، لتركز أنت على صناعة محتوى عظيم بأمان.
+                </p>
+              </div>
+              <div className="bg-white border border-[#f2f2f2] rounded-[16px] p-8 shadow-sm">
+                <div className="text-[#08090a] mb-6"><Sparkles size={32} strokeWidth={1.5} /></div>
+                <h3 className="text-[20px] font-semibold text-[#08090a] mb-3">مساعد المدرس السحري</h3>
+                <p className="text-[15px] text-black/70 leading-relaxed">
+                  أدوات ذكية للمحاضرين لتوليد الاختبارات، كتابة وصف الكورسات، وتحليل أداء الطلاب بضغطة زر واحدة استيحاءً من أفضل منصات الـ AI.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Trending Courses Section (Dynamic Supabase) */}
+        <section className="py-24 bg-white">
+          <div className="max-w-[1200px] mx-auto px-6">
+            <h2 className="text-3xl font-semibold text-[#08090a] mb-12 tracking-tight">أحدث الكورسات المنشورة</h2>
+            
+            {isLoadingCourses ? (
+              <div className="flex justify-center items-center h-40">
+                <Loader2 className="animate-spin text-[#0c8c5e] w-8 h-8" />
+              </div>
+            ) : courses.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {courses.map((course) => (
+                  <Link href={`/courses/${course.slug}`} key={course.id} className="flex flex-col bg-white border border-[#f2f2f2] rounded-[16px] overflow-hidden hover:border-[#dddddd] shadow-sm transition-all group">
+                    <div className="aspect-video bg-[#08090a] flex items-center justify-center relative overflow-hidden">
+                      <MonitorPlay className="w-12 h-12 text-white/20 group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <div className="p-6 flex flex-col flex-1">
+                      <h3 className="font-semibold text-[18px] text-[#08090a] mb-2 line-clamp-2">
+                        {course.title}
+                      </h3>
+                      <p className="text-[13px] text-black/60 mb-4">{course.profiles?.full_name || 'مدرس معتمد'}</p>
+                      <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#f2f2f2]">
+                        <div className="font-semibold text-[20px] text-[#08090a]">
+                          {course.price > 0 ? `$${course.price}` : 'مجانــــاً'}
+                        </div>
+                        <div className="flex items-center gap-1 text-[13px] font-medium text-[#08090a]">
+                          <Star size={14} className="fill-amber-400 text-amber-400" /> 4.9
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 border border-[#f2f2f2] rounded-[16px] bg-[#f2f2f2]/20">
+                <p className="text-black/60 text-[14px]">لا توجد كورسات متاحة حالياً.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 6. FAQ Section */}
+        <section className="py-24 bg-white border-t border-[#f2f2f2]">
+          <div className="max-w-3xl mx-auto px-6">
+            <h2 className="text-3xl font-semibold text-[#08090a] mb-12 text-center tracking-tight">
+              الأسئلة الشائعة
+            </h2>
+            <div className="space-y-4">
+              {faqs.map((faq, i) => (
+                <div key={i} className="border border-[#f2f2f2] rounded-[16px] overflow-hidden">
+                  <button 
+                    onClick={() => setActiveFaq(activeFaq === i ? null : i)}
+                    className="w-full text-right p-6 flex justify-between items-center bg-white hover:bg-[#f2f2f2]/30 transition-colors"
+                  >
+                    <span className="font-semibold text-[15px] text-[#08090a]">{faq.q}</span>
+                    <ChevronDown size={18} className={`text-black/50 transition-transform duration-300 ${activeFaq === i ? 'rotate-180' : ''}`} />
+                  </button>
+                  {activeFaq === i && (
+                    <div className="p-6 pt-0 text-[14px] leading-relaxed text-black/70 bg-white">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
       </main>
 
-      {/* Footer */}
-      <footer style={{ backgroundColor: '#08090a', color: '#ffffff', padding: '64px 24px', marginTop: '80px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
-          <div>
-            <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <Sparkles style={{ color: '#0c8c5e' }} size={18} />
-              <span>MASAR</span>
+      {/* 7. Footer (Professional Dark Theme) */}
+      <footer className="bg-[#08090a] text-white py-16 border-t border-[#1a1a1a]">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+            <div>
+              <Link href="/" className="font-bold flex items-center gap-2 tracking-tight mb-6">
+                <span className="text-[#0c8c5e] text-lg font-black">MASAR</span>
+              </Link>
+              <p className="text-[13px] text-white/60 leading-relaxed">
+                منصة مسار هي بيئتك التعليمية المتكاملة المدعومة بالذكاء الاصطناعي لحماية وبيع وتقديم المحتوى بأعلى جودة.
+              </p>
             </div>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>منصة مسار التعليمية المدعومة بالذكاء الاصطناعي.</p>
+            <div>
+              <h4 className="font-semibold text-[15px] mb-6">المنصة</h4>
+              <ul className="space-y-3 text-[13px] text-white/60">
+                <li><Link href="/courses" className="hover:text-white transition-colors">تصفح الكورسات</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">تسجيل كطالب</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-[15px] mb-6">المميزات</h4>
+              <ul className="space-y-3 text-[13px] text-white/60">
+                <li><Link href="#" className="hover:text-white transition-colors">التشفير وحماية DRM</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">المعلم الذكي (AI Tutor)</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-[15px] mb-6">القانونية</h4>
+              <ul className="space-y-3 text-[13px] text-white/60">
+                <li><Link href="#" className="hover:text-white transition-colors">شروط الاستخدام</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">سياسة الخصوصية</Link></li>
+              </ul>
+            </div>
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Lock size={12} /> جميع الحقوق محفوظة © 2026 مسار
+          <div className="border-t border-[#1a1a1a] pt-8 flex flex-col md:flex-row items-center justify-between text-[12px] text-white/40">
+            <p>© 2026 مسار MASAR. جميع الحقوق محفوظة.</p>
+            <div className="flex items-center gap-2 mt-4 md:mt-0">
+               <Lock size={12} /> <p>مدعوم بتشفير بنكي وبنية تحتية آمنة</p>
+            </div>
           </div>
         </div>
       </footer>
