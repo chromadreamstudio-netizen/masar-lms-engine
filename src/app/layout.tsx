@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+      <body className="bg-white text-black antialiased">
         {children}
       </body>
     </html>
