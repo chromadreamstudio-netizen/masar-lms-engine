@@ -12,6 +12,7 @@
     "@ai-sdk/google": "^4.0.88",
     "@ai-sdk/openai": "^4.0.84",
     "@ai-sdk/react": "^4.0.131",
+    "@google/generative-ai": "^0.24.1",
     "@stripe/stripe-js": "^10.0.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
