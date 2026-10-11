@@ -1,16 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --color-mint-green: #0c8c5e;
-  --color-ink-black: #08090a;
-}
-
 body {
-  background-color: #ffffff;
-  color: #000000;
-  font-family: system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
+  background-color: #ffffff;
 }
