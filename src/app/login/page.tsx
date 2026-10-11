@@ -5,7 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, User, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 
 function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,7 +17,7 @@ function AuthForm() {
   
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams?.get('redirect') || '/dashboard';
+  const urlRedirectTo = searchParams?.get('redirect');
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,14 +31,32 @@ function AuthForm() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        // 1. تسجيل الدخول
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
-        router.push(redirectTo);
-        router.refresh();
+        if (authError) throw authError;
+        
+        if (authData.user) {
+          // 2. التحقق من دور المستخدم لتوجيهه للمكان الصحيح
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
+
+          const userRole = profile?.role || 'student';
+          
+          // إذا كان هناك رابط توجيه مسبق في الـ URL، نستخدمه. إذا لم يوجد، نوجهه حسب دوره.
+          const finalRedirect = urlRedirectTo || (userRole === 'instructor' || userRole === 'admin' ? '/instructor' : '/dashboard');
+          
+          router.push(finalRedirect);
+          router.refresh();
+        }
+
       } else {
+        // إنشاء حساب جديد (افتراضياً يكون طالباً)
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -58,11 +76,13 @@ function AuthForm() {
              role: 'student'
            }, { onConflict: 'id' });
         }
-        router.push(redirectTo);
+
+        const finalRedirect = urlRedirectTo || '/dashboard';
+        router.push(finalRedirect);
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message || 'حدث خطأ أثناء العملية. يرجى المحاولة مرة أخرى.');
+      setError(err.message || 'حدث خطأ أثناء العملية. يرجى التأكد من البيانات والمحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
@@ -81,13 +101,14 @@ function AuthForm() {
         </h2>
         <p className="mt-2 text-sm text-slate-600">
           {isLogin 
-            ? 'سجل دخولك لاستكمال دروسك ومتابعة تقدمك.' 
+            ? 'سجل دخولك لاستكمال دروسك أو إدارة كورساتك.' 
             : 'أنشئ حساباً مجانياً وافتح آفاقاً جديدة للمعرفة.'}
         </p>
       </div>
 
       <div className="mt-8">
         <form onSubmit={handleAuth} className="space-y-6">
+          
           {!isLogin && (
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
@@ -155,7 +176,7 @@ function AuthForm() {
             className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#00a88f] hover:bg-[#008f7a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00a88f] transition-all disabled:opacity-50"
           >
             {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <Loader2 className="w-5 h-5 animate-spin text-white" />
             ) : (
               isLogin ? 'دخول' : 'إنشاء حساب'
             )}
@@ -184,24 +205,34 @@ function AuthForm() {
 export default function AuthPage() {
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans dir-rtl" dir="rtl">
+      
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[560px] bg-white shadow-2xl z-10 relative">
         <div className="mx-auto w-full max-w-sm lg:w-[400px]">
-          <Suspense fallback={<div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-[#00a88f] border-t-transparent rounded-full animate-spin"></div></div>}>
+          <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[#00a88f]" /></div>}>
             <AuthForm />
           </Suspense>
         </div>
       </div>
+
       <div className="hidden lg:flex flex-1 relative bg-slate-900 items-center justify-center p-12 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#391e75]/90 to-[#00a88f]/90 mix-blend-multiply"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#00a88f] rounded-full blur-[100px] opacity-50"></div>
         <div className="absolute top-20 right-20 w-72 h-72 bg-[#391e75] rounded-full blur-[80px] opacity-50"></div>
+
         <div className="relative z-10 max-w-xl text-white">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold px-4 py-2 rounded-full text-xs mb-8">
             <Sparkles size={16} className="text-amber-300" />
             <span>الجيل الجديد من منصات التعليم الرقمي</span>
           </div>
-          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">مستقبلك يبدأ من هنا.</h2>
-          <p className="text-lg text-slate-200 mb-12 leading-relaxed">انضم إلى آلاف الطلاب الذين يطورون مهاراتهم يومياً باستخدام أحدث تقنيات التعلم المدعومة بالذكاء الاصطناعي (Gemini).</p>
+          
+          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
+            مستقبلك يبدأ من هنا.
+          </h2>
+          
+          <p className="text-lg text-slate-200 mb-12 leading-relaxed">
+            انضم إلى آلاف الطلاب الذين يطورون مهاراتهم يومياً باستخدام أحدث تقنيات التعلم المدعومة بالذكاء الاصطناعي (Gemini).
+          </p>
+
           <div className="space-y-4">
             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
               <div className="bg-[#00a88f]/20 p-2 rounded-xl text-[#00a88f]">
@@ -212,6 +243,7 @@ export default function AuthPage() {
                 <p className="text-xs text-slate-400 mt-1">تعلم بالسرعة التي تناسبك وفي أي وقت.</p>
               </div>
             </div>
+            
             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
               <div className="bg-purple-500/20 p-2 rounded-xl text-purple-400">
                 <CheckCircle2 size={24} />
