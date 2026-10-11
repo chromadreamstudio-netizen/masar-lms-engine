@@ -16,10 +16,8 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   const [modules, setModules] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // تبويبات الصفحة
   const [activeTab, setActiveTab] = useState<'curriculum' | 'ai_tutor'>('curriculum');
 
-  // حالات المنهج
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [isAddingModule, setIsAddingModule] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +27,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // حالات المعلم الذكي
   const [aiPrompt, setAiPrompt] = useState('أنت مساعد تدريس ذكي في منصة مسار. أجب بلباقة واختصار بناءً على المادة العلمية المرفقة فقط.');
   const [aiKnowledge, setAiKnowledge] = useState('');
   const [isSavingAi, setIsSavingAi] = useState(false);
@@ -45,12 +42,10 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       const resolvedParams = await params;
       const courseId = resolvedParams.id;
 
-      // جلب الكورس
       const { data: courseData } = await supabase.from('courses').select('*').eq('id', courseId).single();
       if (courseData) setCourse(courseData);
 
-      // جلب إعدادات الذكاء الاصطناعي 
-      const { data: aiData, error: aiError } = await supabase
+      const { data: aiData } = await supabase
         .from('course_ai_settings')
         .select('*')
         .eq('course_id', courseId)
@@ -61,7 +56,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         setAiKnowledge(aiData.knowledge_text || '');
       }
 
-      // جلب المنهج
       const { data: modulesData } = await supabase
         .from('modules')
         .select(`*, lessons (*)`)
@@ -81,7 +75,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     fetchCourseData();
   }, [params, supabase]);
 
-  // حفظ إعدادات المعلم الآلي
   const handleSaveAiSettings = async () => {
     setIsSavingAi(true);
     await supabase.from('course_ai_settings').upsert({
@@ -94,7 +87,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     alert('تم حفظ إعدادات المعلم الذكي بنجاح!');
   };
 
-  // نشر الكورس
   const handlePublishCourse = async () => {
     if (modules.length === 0) {
       alert('يجب إضافة فصل واحد على الأقل قبل النشر.');
@@ -136,28 +128,50 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       if (!createRes.ok) throw new Error(resData.error);
 
       const xhr = new XMLHttpRequest();
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100)); };
+      xhr.upload.onprogress = (e) => { 
+        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100)); 
+      };
+      
       xhr.onload = async () => {
         if (xhr.status === 200 || xhr.status === 201) {
-          const currentModule = modules.find(m => m.id === activeModuleId);
-          const { data: newLesson } = await supabase.from('lessons').insert([{ 
-            module_id: activeModuleId, title: lessonTitle, order_index: currentModule?.lessons?.length || 0,
-            video_url: resData.videoId, is_free_preview: false
-          }]).select().single();
-          
-          if (newLesson) {
-            setModules(modules.map(mod => mod.id === activeModuleId ? { ...mod, lessons: [...mod.lessons, newLesson] } : mod));
+          try {
+            const currentModule = modules.find(m => m.id === activeModuleId);
+            const { data: newLesson, error: dbError } = await supabase.from('lessons').insert([{ 
+              module_id: activeModuleId, 
+              title: lessonTitle, 
+              order_index: currentModule?.lessons?.length || 0,
+              video_url: resData.videoId, 
+              is_free_preview: false
+            }]).select().single();
+            
+            if (dbError) throw dbError;
+
+            if (newLesson) {
+              setModules(modules.map(mod => mod.id === activeModuleId ? { ...mod, lessons: [...mod.lessons, newLesson] } : mod));
+            }
+            setIsUploading(false); 
+            setIsModalOpen(false);
+          } catch (dbErr: any) {
+            setIsUploading(false);
+            alert('تم رفع الفيديو بنجاح، ولكن فشل الحفظ في المنصة: ' + dbErr.message);
           }
-          setIsUploading(false); setIsModalOpen(false);
+        } else {
+          setIsUploading(false);
+          alert('فشل الرفع للشبكة الآمنة. الرمز: ' + xhr.status);
         }
       };
+
+      xhr.onerror = () => {
+        setIsUploading(false);
+        alert('حدث خطأ في الاتصال بالشبكة أثناء الرفع.');
+      };
+
       xhr.open('PUT', `https://video.bunnycdn.com/library/${resData.libraryId}/videos/${resData.videoId}`);
       xhr.setRequestHeader('AccessKey', resData.uploadKey);
       xhr.send(selectedFile);
     } catch (err: any) { 
       setIsUploading(false); 
-      // تم تعديل رسالة الخطأ هنا لتكون مفصلة للتتبع
-      alert('فشل الرفع: ' + err.message); 
+      alert('فشل التهيئة: ' + err.message); 
     }
   };
 
@@ -197,7 +211,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         </div>
       </header>
 
-      {/* التبويبات (Tabs) */}
       <div className="max-w-5xl mx-auto mb-6 flex gap-2 border-b border-slate-800">
         <button 
           onClick={() => setActiveTab('curriculum')}
@@ -215,10 +228,8 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
 
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* المحتوى يتغير بناءً على التبويب */}
         <div className="lg:col-span-2">
           
-          {/* تبويب المنهج */}
           {activeTab === 'curriculum' && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
               <div className="space-y-4 mb-8">
@@ -237,7 +248,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                             <PlayCircle size={16} className="text-[#00a88f]" />
                             <span className="text-sm font-medium text-slate-300">{lesson.title}</span>
                           </div>
-                          {/* تم تغيير النص هنا من Bunny DRM */}
                           <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">فيديو محمي ✓</span>
                         </div>
                       ))}
@@ -258,7 +268,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
             </div>
           )}
 
-          {/* تبويب تدريب المعلم الذكي */}
           {activeTab === 'ai_tutor' && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
               <div className="bg-[#00a88f]/10 border border-[#00a88f]/20 p-4 rounded-xl mb-6">
@@ -306,7 +315,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
 
         </div>
 
-        {/* الشريط الجانبي */}
         <div className="space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sticky top-24">
             <h3 className="font-bold text-white mb-4">ملخص الكورس</h3>
@@ -330,12 +338,10 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {/* نافذة الرفع المنبثقة */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
             <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-800/50">
-              {/* تم تغيير النص هنا من رفع درس لـ Bunny.net */}
               <h3 className="text-lg font-bold text-white flex items-center gap-2"><Video className="text-[#00a88f]" size={20} /> الرفع الآمن للدرس</h3>
               <button onClick={() => !isUploading && setIsModalOpen(false)} className="text-slate-400 hover:text-white transition"><X size={20} /></button>
             </div>
