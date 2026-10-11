@@ -49,10 +49,15 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       const { data: courseData } = await supabase.from('courses').select('*').eq('id', courseId).single();
       if (courseData) setCourse(courseData);
 
-      // جلب إعدادات الذكاء الاصطناعي
-      const { data: aiData } = await supabase.from('course_ai_settings').select('*').eq('course_id', courseId).single();
+      // جلب إعدادات الذكاء الاصطناعي (تم تصحيح الثغرة هنا باستخدام maybeSingle)
+      const { data: aiData, error: aiError } = await supabase
+        .from('course_ai_settings')
+        .select('*')
+        .eq('course_id', courseId)
+        .maybeSingle(); 
+        
       if (aiData) {
-        setAiPrompt(aiData.base_prompt || '');
+        setAiPrompt(aiData.base_prompt || 'أنت مساعد تدريس ذكي في منصة مسار...');
         setAiKnowledge(aiData.knowledge_text || '');
       }
 
@@ -103,7 +108,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     router.refresh();
   };
 
-  // ... (نفس دوال إضافة الفصل ورفع الفيديو السابقة)
   const handleAddModule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newModuleTitle.trim()) return;
