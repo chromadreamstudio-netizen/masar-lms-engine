@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Cairo } from "next/font/google";
 import "./globals.css";
+
+// استدعاء خط Cairo الاحترافي ودعم الأوزان العريضة للأزرار والعناوين
+const cairo = Cairo({ 
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700", "800", "900"] 
+});
 
 export const metadata: Metadata = {
   title: "مسار MASAR | المنصة التعليمية المدعومة بالذكاء الاصطناعي",
@@ -14,7 +21,6 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* إضافة Tailwind CDN لضمان عمل التصميم 100% متجاوزاً أي أخطاء في الـ Build */}
         <script src="https://cdn.tailwindcss.com"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
@@ -24,6 +30,9 @@ export default function RootLayout({
                   colors: {
                     mint: '#0c8c5e',
                     ink: '#08090a'
+                  },
+                  fontFamily: {
+                    sans: ['Cairo', 'sans-serif']
                   }
                 }
               }
@@ -31,7 +40,8 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className="bg-white text-black antialiased font-sans">
+      {/* تطبيق الخط على كامل المنصة */}
+      <body className={`${cairo.className} bg-white text-black antialiased`}>
         {children}
       </body>
     </html>
