@@ -27,11 +27,10 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // AI States
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiKnowledge, setAiKnowledge] = useState('');
   const [isSavingAi, setIsSavingAi] = useState(false);
-  const [isAiDirty, setIsAiDirty] = useState(false); // ثغرة 2: مؤشر التعديل غير المحفوظ
+  const [isAiDirty, setIsAiDirty] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
   const supabase = createBrowserClient(
@@ -67,7 +66,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     fetchCourseData();
   }, [params, supabase]);
 
-  // دالة حفظ الذكاء الاصطناعي
   const handleSaveAiSettings = async () => {
     setIsSavingAi(true);
     await supabase.from('course_ai_settings').upsert({
@@ -77,10 +75,9 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     }, { onConflict: 'course_id' });
     
     setIsSavingAi(false);
-    setIsAiDirty(false); // إعادة تعيين المؤشر بعد الحفظ
+    setIsAiDirty(false);
   };
 
-  // ثغرة 1: دالة نشر / إلغاء نشر الكورس
   const handleTogglePublish = async () => {
     if (!course.is_published && modules.length === 0) {
       alert('يجب إضافة فصل واحد على الأقل قبل النشر.');
@@ -93,7 +90,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
     setIsPublishing(false);
   };
 
-  // ثغرة 1: دوال الحذف الآمن (حذف الفصول والدروس)
   const handleDeleteModule = async (moduleId: string) => {
     if (confirm('هل أنت متأكد من حذف هذا الفصل بجميع دروسه؟ لا يمكن التراجع عن هذا الإجراء.')) {
       await supabase.from('modules').delete().eq('id', moduleId);
@@ -120,14 +116,18 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   };
 
   const openLessonModal = (moduleId: string) => {
-    setActiveModuleId(moduleId); setLessonTitle(''); setSelectedFile(null); setUploadProgress(0); setIsModalOpen(true);
+    setActiveModuleId(moduleId); 
+    setLessonTitle(''); 
+    setSelectedFile(null); 
+    setUploadProgress(0); 
+    setIsModalOpen(true);
   };
 
-  // ثغرة 3: منع الرفع المزدوج وتأمين العملية
   const handleUploadLesson = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isUploading || !lessonTitle || !selectedFile || !activeModuleId) return; // حماية صريحة
-    setIsUploading(true); setUploadProgress(1);
+    if (isUploading || !lessonTitle || !selectedFile || !activeModuleId) return;
+    setIsUploading(true); 
+    setUploadProgress(1);
 
     try {
       const createRes = await fetch('/api/videos/create', {
@@ -157,9 +157,11 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
           if (newLesson) {
             setModules(modules.map(mod => mod.id === activeModuleId ? { ...mod, lessons: [...mod.lessons, newLesson] } : mod));
           }
-          setIsUploading(false); setIsModalOpen(false);
+          setIsUploading(false); 
+          setIsModalOpen(false);
         } else {
-          setIsUploading(false); alert('فشل الرفع للشبكة الآمنة.');
+          setIsUploading(false); 
+          alert('فشل الرفع للشبكة الآمنة.');
         }
       };
 
@@ -168,7 +170,8 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       xhr.setRequestHeader('AccessKey', resData.uploadKey);
       xhr.send(selectedFile);
     } catch (err: any) { 
-      setIsUploading(false); alert('فشل التهيئة: ' + err.message); 
+      setIsUploading(false); 
+      alert('فشل التهيئة: ' + err.message); 
     }
   };
 
@@ -193,7 +196,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
             </div>
           </div>
           
-          {/* تم إضافة زر إلغاء النشر لمرونة الإدارة */}
           <div className="flex gap-3">
             <button 
               onClick={handleTogglePublish}
@@ -225,7 +227,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                         <GripVertical className="text-gray-400 cursor-move" size={18} />
                         <h3 className="font-bold text-ink text-sm">الفصل: {module.title}</h3>
                       </div>
-                      {/* زر حذف الفصل */}
                       <button onClick={() => handleDeleteModule(module.id)} className="text-gray-400 hover:text-red-500 opacity-0 group-hover/module:opacity-100 transition-all p-1" title="حذف الفصل"><Trash2 size={16} /></button>
                     </div>
                     <div className="p-4 space-y-2">
@@ -237,7 +238,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-bold text-mint bg-mint/10 px-2 py-1 rounded">فيديو محمي ✓</span>
-                            {/* زر حذف الدرس */}
                             <button onClick={() => handleDeleteLesson(lesson.id, module.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all" title="حذف الدرس"><Trash2 size={16} /></button>
                           </div>
                         </div>
@@ -270,7 +270,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                 <textarea rows={10} value={aiKnowledge} onChange={(e) => { setAiKnowledge(e.target.value); setIsAiDirty(true); }} className="block w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-ink font-medium focus:ring-mint focus:border-mint outline-none text-sm resize-none shadow-inner" placeholder="انسخ هنا ملخص الدروس..." />
               </div>
               
-              {/* رسالة التنبيه بوجود تعديلات غير محفوظة */}
               {isAiDirty && (
                 <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg text-xs font-bold border border-amber-200">
                   <AlertCircle size={16} /> توجد تعديلات غير محفوظة، تذكر الضغط على حفظ!
@@ -284,7 +283,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
           )}
         </div>
 
-        {/* ملخص الكورس الجانبي (بدون تغيير) */}
         <div className="space-y-6">
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm sticky top-24">
             <h3 className="font-bold text-ink mb-6">ملخص الكورس</h3>
@@ -303,7 +301,6 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {/* نافذة رفع الفيديو */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
           <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
@@ -329,4 +326,25 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
                 </div>
                 {isUploading && (
                   <div className="space-y-2 mt-4">
-                    <div className="flex justify-between text-
+                    <div className="flex justify-between text-xs font-bold text-mint">
+                      <span>جاري الرفع...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div className="bg-mint h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="mt-8 flex gap-3">
+                <button type="submit" disabled={isUploading || !lessonTitle || !selectedFile} className="flex-1 bg-ink hover:bg-gray-800 text-white py-3 rounded-xl font-bold transition shadow-sm disabled:opacity-50 flex justify-center items-center gap-2">
+                  {isUploading ? <><Loader2 className="w-5 h-5 animate-spin" /> جاري الرفع...</> : 'بدء الرفع الآمن'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
