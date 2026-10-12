@@ -16,7 +16,7 @@ export default function PricingPage() {
       buttonText: 'ابدأ مجاناً',
       buttonStyle: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
       popular: false,
-      href: '/login?redirect=/instructor', // يوجهه للتسجيل في المنصة
+      href: '/login?redirect=/instructor', 
       target: '_self'
     },
     {
@@ -28,8 +28,8 @@ export default function PricingPage() {
       buttonStyle: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg',
       popular: true,
       badge: 'الأكثر طلباً',
-      // رابط Lemon Squeezy الخاص بك
-      href: 'https://kian-agentnet1.lemonsqueezy.com/checkout/buy/d81c4193-b618-416f-b21c-0608fe1fcf0d', 
+      // الرابط الجديد الاحترافي الخاص بمتجر مسار
+      href: 'https://masar-platform.lemonsqueezy.com/checkout/buy/34ee4279-f45a-4420-a599-efb7f6b80610', 
       target: '_blank' // يفتح صفحة الدفع في نافذة جديدة
     },
     {
@@ -39,7 +39,7 @@ export default function PricingPage() {
       buttonText: 'تواصل معنا',
       buttonStyle: 'bg-gray-900 text-white hover:bg-gray-800',
       popular: false,
-      href: 'mailto:ceo@masar.com', // يفتح تطبيق البريد للتواصل معك
+      href: 'mailto:ceo@masar.com', 
       target: '_blank'
     },
   ];
