@@ -3,13 +3,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, PlayCircle, Bot, Send, Loader2, Menu, X, Shield, Sparkles } from 'lucide-react';
 
 export default function LearningRoom({ params }: { params: { slug: string } }) {
+  const router = useRouter();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [aiSettings, setAiSettings] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Chat States
   const [messages, setMessages] = useState<{sender: 'user'|'ai', text: string}[]>([]);
@@ -26,43 +29,79 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
   );
 
   useEffect(() => {
-    const fetchCourseData = async () => {
+    const fetchLearningData = async () => {
       const resolvedParams = await params;
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // 1. Fetch Course
-      const { data: courseData } = await supabase.from('courses').select('*').eq('slug', resolvedParams.slug).single();
-      if (courseData) setCourse(courseData);
-
-      // 2. Fetch AI Settings
-      if (courseData) {
-        const { data: aiData } = await supabase.from('course_ai_settings').select('*').eq('course_id', courseData.id).maybeSingle();
-        setAiSettings(aiData);
+      if (!user) {
+        router.push('/login');
+        return;
       }
 
-      // 3. Fetch Curriculum
-      if (courseData) {
-        const { data: modulesData } = await supabase.from('modules').select(`*, lessons (*)`).eq('course_id', courseData.id).order('order_index', { ascending: true });
+      // 1. جلب الكورس
+      const { data: courseData } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('slug', resolvedParams.slug)
+        .single();
         
-        if (modulesData && modulesData.length > 0) {
-          const sortedModules = modulesData.map(mod => ({
-            ...mod,
-            lessons: mod.lessons.sort((a: any, b: any) => a.order_index - b.order_index)
-          }));
-          setModules(sortedModules);
-          // Set first lesson as active by default
-          if (sortedModules[0].lessons.length > 0) {
-            setActiveLesson(sortedModules[0].lessons[0]);
-          }
+      if (!courseData) {
+        router.push('/dashboard');
+        return;
+      }
+      setCourse(courseData);
+
+      // 2. التحقق من اشتراك الطالب
+      const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('*')
+        .eq('student_id', user.id)
+        .eq('course_id', courseData.id)
+        .maybeSingle();
+
+      if (!enrollment && !courseData.is_published) {
+        // إذا لم يكن مشتركاً والكورس غير منشور، أعده للوحة التحكم
+         router.push('/dashboard');
+         return;
+      }
+
+      // 3. جلب إعدادات الذكاء الاصطناعي
+      const { data: aiData } = await supabase
+        .from('course_ai_settings')
+        .select('*')
+        .eq('course_id', courseData.id)
+        .maybeSingle();
+      setAiSettings(aiData);
+
+      // 4. جلب المنهج
+      const { data: modulesData } = await supabase
+        .from('modules')
+        .select(`*, lessons (*)`)
+        .eq('course_id', courseData.id)
+        .order('order_index', { ascending: true });
+        
+      if (modulesData && modulesData.length > 0) {
+        const sortedModules = modulesData.map(mod => ({
+          ...mod,
+          lessons: mod.lessons.sort((a: any, b: any) => a.order_index - b.order_index)
+        }));
+        setModules(sortedModules);
+        
+        // تحديد أول درس كدرس افتراضي
+        if (sortedModules[0].lessons.length > 0) {
+          setActiveLesson(sortedModules[0].lessons[0]);
         }
       }
+      setIsLoading(false);
     };
-    fetchCourseData();
-  }, [params, supabase]);
 
-  // Scroll chat to bottom
+    fetchLearningData();
+  }, [params, router, supabase]);
+
+  // التمرير التلقائي لمربع الدردشة
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isAiTyping]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,31 +127,31 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
       if (response.ok) {
         setMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
       } else {
-        setMessages(prev => [...prev, { sender: 'ai', text: 'عذراً، حدث خطأ في الاتصال بالمعلم الذكي. يرجى المحاولة لاحقاً.' }]);
+        setMessages(prev => [...prev, { sender: 'ai', text: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة لاحقاً.' }]);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { sender: 'ai', text: 'عذراً، تأكد من اتصالك بالإنترنت.' }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: 'تأكد من اتصالك بالإنترنت.' }]);
     } finally {
       setIsAiTyping(false);
     }
   };
 
-  if (!course) return <div className="min-h-screen bg-[#08090a] flex justify-center items-center"><Loader2 className="animate-spin text-[#0c8c5e] w-12 h-12" /></div>;
+  if (isLoading) return <div className="min-h-screen bg-ink flex justify-center items-center"><Loader2 className="animate-spin text-mint w-12 h-12" /></div>;
 
   return (
-    <div className="min-h-screen bg-[#08090a] text-white flex flex-col font-sans overflow-hidden" dir="rtl">
+    <div className="min-h-screen bg-ink text-white flex flex-col font-sans overflow-hidden" dir="rtl">
       
       {/* Top Navbar */}
       <header className="h-16 bg-[#111111] border-b border-[#222222] flex items-center justify-between px-6 shrink-0 z-20">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 hover:text-white transition flex items-center gap-2 text-sm font-bold bg-[#222] px-3 py-1.5 rounded-md">
+          <Link href="/dashboard" className="text-gray-400 hover:text-white transition flex items-center gap-2 text-sm font-bold bg-[#222222] px-4 py-2 rounded-lg">
             <ArrowRight size={16} /> العودة
           </Link>
-          <div className="w-px h-6 bg-[#333]"></div>
-          <h1 className="font-bold text-sm md:text-base text-white truncate max-w-xs md:max-w-md">{course.title}</h1>
+          <div className="w-px h-6 bg-[#333333]"></div>
+          <h1 className="font-bold text-sm md:text-base text-white truncate max-w-xs md:max-w-md">{course?.title}</h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden md:flex items-center gap-2 text-[#0c8c5e] text-xs font-bold bg-[#0c8c5e]/10 px-3 py-1.5 rounded-full border border-[#0c8c5e]/20">
+          <span className="hidden md:flex items-center gap-2 text-mint text-xs font-bold bg-mint/10 px-3 py-1.5 rounded-full border border-mint/20">
             <Shield size={14} /> حماية DRM نشطة
           </span>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-white p-2">
@@ -129,21 +168,21 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
           <div className="p-5 border-b border-[#222222] sticky top-0 bg-[#111111] z-10">
             <h2 className="font-bold text-white text-base">محتوى الكورس</h2>
           </div>
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-6">
             {modules.map((module: any, idx: number) => (
-              <div key={module.id} className="mb-4">
-                <h3 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">الفصل {idx + 1}: {module.title}</h3>
-                <div className="space-y-1">
+              <div key={module.id}>
+                <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">الفصل {idx + 1}: {module.title}</h3>
+                <div className="space-y-2">
                   {module.lessons?.map((lesson: any) => (
                     <button
                       key={lesson.id}
                       onClick={() => { setActiveLesson(lesson); setIsSidebarOpen(false); }}
-                      className={`w-full text-right p-3 rounded-lg flex items-start gap-3 transition-colors ${activeLesson?.id === lesson.id ? 'bg-[#0c8c5e]/10 border border-[#0c8c5e]/30' : 'hover:bg-[#222222] border border-transparent'}`}
+                      className={`w-full text-right p-3 rounded-xl flex items-start gap-3 transition-colors ${activeLesson?.id === lesson.id ? 'bg-mint/10 border border-mint/30' : 'hover:bg-[#222222] border border-transparent'}`}
                     >
-                      <PlayCircle size={18} className={`shrink-0 mt-0.5 ${activeLesson?.id === lesson.id ? 'text-[#0c8c5e]' : 'text-gray-500'}`} />
+                      <PlayCircle size={18} className={`shrink-0 mt-0.5 ${activeLesson?.id === lesson.id ? 'text-mint' : 'text-gray-500'}`} />
                       <div>
                         <div className={`text-sm font-bold ${activeLesson?.id === lesson.id ? 'text-white' : 'text-gray-300'}`}>{lesson.title}</div>
-                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Shield size={10} /> فيديو محمي</div>
+                        <div className="text-xs text-gray-500 mt-1.5 flex items-center gap-1 font-medium"><Shield size={12} /> محمي بـ DRM</div>
                       </div>
                     </button>
                   ))}
@@ -154,11 +193,10 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
         </div>
 
         {/* Center: Video Player */}
-        <div className="flex-1 flex flex-col bg-black relative">
+        <div className="flex-1 flex flex-col bg-[#000000] relative">
           {activeLesson ? (
             <div className="w-full h-full relative flex items-center justify-center">
-              {/* Bunny.net Secure Player Iframe */}
-              {/* ملاحظة: سنستخدم رابط Bunny الافتراضي هنا. قم بتحديث الـ Library ID لاحقاً في Vercel */}
+              {/* Bunny.net Secure Player */}
               <iframe 
                 src={`https://iframe.mediadelivery.net/embed/${process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || '12345'}/${activeLesson.video_url}?autoplay=true&loop=false&muted=false&preload=true&responsive=true`}
                 loading="lazy"
@@ -179,33 +217,33 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
         <div className="w-full md:w-96 bg-[#111111] border-r border-[#222222] flex flex-col shrink-0 h-[50vh] md:h-auto">
           {/* Chat Header */}
           <div className="p-4 border-b border-[#222222] bg-[#111111] flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#0c8c5e] to-[#085b3d] flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-mint to-[#085b3d] flex items-center justify-center shadow-lg">
               <Bot size={20} className="text-white" />
             </div>
             <div>
               <h3 className="font-bold text-white text-sm flex items-center gap-1">المعلم الذكي <Sparkles size={12} className="text-amber-400" /></h3>
-              <p className="text-xs text-[#0c8c5e]">متصل وجاهز للمساعدة</p>
+              <p className="text-xs text-mint font-medium">متصل وجاهز للمساعدة</p>
             </div>
           </div>
 
           {/* Chat Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0a0a0a]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0a0a0a] scrollbar-thin scrollbar-thumb-[#333] scrollbar-track-transparent">
             {messages.length === 0 && (
-              <div className="text-center mt-10">
-                <div className="w-16 h-16 bg-[#222] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles size={24} className="text-gray-400" />
+              <div className="text-center mt-12">
+                <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#333]">
+                  <Sparkles size={24} className="text-mint" />
                 </div>
-                <p className="text-gray-400 text-sm font-bold">أهلاً بك في الدرس!</p>
-                <p className="text-gray-500 text-xs mt-2 leading-relaxed">هل لديك أي سؤال حول ما يشرحه المحاضر الآن؟ اسألني وسأشرح لك بناءً على منهج الكورس.</p>
+                <p className="text-white text-base font-bold mb-2">أهلاً بك في الدرس!</p>
+                <p className="text-gray-500 text-sm font-medium leading-relaxed px-4">هل لديك أي سؤال حول الشرح؟ اسألني وسأساعدك بناءً على منهج هذا الكورس.</p>
               </div>
             )}
             
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-xl text-sm leading-relaxed font-medium ${
+                <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed font-bold ${
                   msg.sender === 'user' 
-                  ? 'bg-white text-black rounded-tl-none' 
-                  : 'bg-[#1a1a1a] border border-[#333] text-gray-200 rounded-tr-none'
+                  ? 'bg-mint text-white rounded-tl-sm shadow-md' 
+                  : 'bg-[#1a1a1a] border border-[#333] text-gray-200 rounded-tr-sm'
                 }`}>
                   {msg.text}
                 </div>
@@ -214,10 +252,10 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
             
             {isAiTyping && (
               <div className="flex justify-start">
-                <div className="bg-[#1a1a1a] border border-[#333] px-4 py-3 rounded-xl rounded-tr-none flex items-center gap-2">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="bg-[#1a1a1a] border border-[#333] px-4 py-3 rounded-2xl rounded-tr-sm flex items-center gap-2">
+                  <div className="w-2 h-2 bg-mint rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-mint rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-mint rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                 </div>
               </div>
             )}
@@ -231,16 +269,16 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="اسأل المعلم الذكي عن الدرس..."
-                className="w-full bg-[#222222] border border-[#333] text-white text-sm font-medium rounded-xl py-3 pr-4 pl-12 focus:outline-none focus:border-[#0c8c5e] transition-colors"
+                placeholder="اسأل المعلم الذكي..."
+                className="w-full bg-[#1a1a1a] border border-[#333] text-white text-sm font-bold rounded-xl py-3.5 pr-4 pl-12 focus:outline-none focus:border-mint transition-colors"
                 disabled={isAiTyping}
               />
               <button 
                 type="submit" 
                 disabled={!inputMessage.trim() || isAiTyping}
-                className="absolute left-2 bg-[#0c8c5e] text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#0a754f] transition-colors disabled:opacity-50"
+                className="absolute left-2 bg-mint text-white w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#0a754f] transition-colors disabled:opacity-50"
               >
-                <Send size={14} className="mr-0.5" />
+                <Send size={16} className="mr-0.5" />
               </button>
             </form>
           </div>
