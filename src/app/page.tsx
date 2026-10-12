@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image'; // تم استدعاء مكون الصورة لرفع اللوجو والسحب
-import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { 
   Search, Shield, MonitorPlay, ArrowRight, Check, ChevronDown, 
   Sparkles, BrainCircuit, Code, Palette, Briefcase, 
-  LayoutDashboard, LogOut, Loader2, Lock, PlayCircle, Star
+  LayoutDashboard, LogOut, Loader2, Lock, PlayCircle, Star, GraduationCap
 } from 'lucide-react';
 
 export default function GlobalPlatformHome() {
@@ -66,45 +66,44 @@ export default function GlobalPlatformHome() {
   return (
     <div className="min-h-screen bg-white text-black font-sans" dir="rtl">
       
-      {/* 1. Header with Correct Logo */}
+      {/* 1. Header (Smart Routing Integration) */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            {/* تم تفعيل اللوجو هنا */}
             <Link href="/" className="flex items-center no-underline hover:opacity-80 transition-opacity">
-              <Image 
-                src="/logo.png" 
-                alt="MASAR Logo" 
-                width={120} 
-                height={40} 
-                className="object-contain"
-                priority
-              />
+              <Image src="/logo.png" alt="MASAR Logo" width={100} height={30} className="object-contain" priority />
             </Link>
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-              <Link href="/courses" className="hover:text-[#0c8c5e] transition-colors">تصفح الكورسات</Link>
-              <Link href="#features" className="hover:text-[#0c8c5e] transition-colors">المميزات السحرية</Link>
-              <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="hover:text-[#0c8c5e] transition-colors">التدريس في مسار</Link>
+            <nav className="hidden md:flex items-center gap-6 text-sm font-bold text-gray-600">
+              <Link href="/courses" className="hover:text-mint transition-colors">تصفح الكورسات</Link>
+              <Link href="#features" className="hover:text-mint transition-colors">المميزات السحرية</Link>
+              {/* توجيه صريح للمدرسين */}
+              <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="text-mint hover:text-[#0a754f] transition-colors">التدريس في مسار</Link>
             </nav>
           </div>
 
           <div>
             {user ? (
+              // مسار المستخدم المسجل (فصل واضح بين لوحة الطالب والمدرس)
               <div className="flex items-center gap-3">
-                 <Link href="/dashboard" className="text-sm font-medium text-[#08090a] bg-gray-100 px-4 py-2 rounded-md transition-colors hover:bg-gray-200 flex items-center gap-2">
-                    <LayoutDashboard size={16} /> لوحتي
+                 <Link href="/dashboard" className="text-sm font-bold text-ink bg-gray-100 px-4 py-2 rounded-lg transition-colors hover:bg-gray-200 flex items-center gap-2">
+                    <GraduationCap size={16} /> لوحة الطالب
                   </Link>
-                  <button onClick={handleSignOut} className="text-red-500 hover:text-red-700 p-2 rounded transition-colors">
+                  <Link href="/instructor" className="hidden md:flex text-sm font-bold text-white bg-mint px-4 py-2 rounded-lg transition-colors hover:bg-[#0a754f] items-center gap-2">
+                    <LayoutDashboard size={16} /> بوابة المدرس
+                  </Link>
+                  <div className="w-px h-5 bg-gray-200 mx-1"></div>
+                  <button onClick={handleSignOut} className="text-gray-400 hover:text-red-500 p-2 rounded transition-colors" title="تسجيل الخروج">
                     <LogOut size={18} />
                   </button>
               </div>
             ) : (
+              // مسار الزائر (توجيه دقيق لنقاط الدخول)
               <div className="flex items-center gap-3">
-                <Link href="/login" className="text-sm font-medium text-[#08090a] px-4 py-2 hover:bg-gray-50 rounded-md transition-colors">
-                  دخول
+                <Link href="/login?redirect=/dashboard" className="text-sm font-bold text-ink px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors">
+                  دخول الطالب
                 </Link>
-                <Link href="/login" className="text-sm font-medium bg-[#08090a] text-white px-5 py-2 rounded-md hover:bg-gray-800 transition-colors shadow-sm">
-                  ابدأ مجاناً
+                <Link href="/login?redirect=/dashboard" className="text-sm font-bold bg-ink text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition-colors shadow-sm">
+                  ابدأ التعلم مجاناً
                 </Link>
               </div>
             )}
@@ -113,16 +112,11 @@ export default function GlobalPlatformHome() {
       </header>
 
       <main>
-        {/* 2. Hero Section (Authentic Mintlify Aesthetic: Teal Gradient + Clouds) */}
-        {/* تم تغيير التدرج اللوني ليكون مطابقاً لمرجع Mintlify الفاخر */}
+        {/* 2. Hero Section (Authentic Mintlify Aesthetic) */}
         <section className="relative pt-24 pb-48 overflow-hidden bg-gradient-to-b from-[#0f4c5c] via-[#0b7a66] to-[#0c8c5e] text-white">
-          
-          {/* طبقة السحب (Clouds Layer) */}
-          {/* يمكنك إضافة صورة clouds.png في مجلد public وستظهر هنا أوتوماتيكياً */}
           <div className="absolute bottom-0 left-0 w-full h-2/3 bg-[url('/clouds.png')] bg-bottom bg-no-repeat bg-contain opacity-80 pointer-events-none mix-blend-overlay"></div>
 
           <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-            
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold mb-8 uppercase tracking-wider">
               <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse"></span>
               المنصة التعليمية الأولى المدعومة بالذكاء الاصطناعي
@@ -135,19 +129,19 @@ export default function GlobalPlatformHome() {
               تدمج منصة مسار التشفير العسكري للمحتوى مع سحر الذكاء الاصطناعي التفاعلي لتجربة تعليمية فريدة من نوعها.
             </p>
             
-            <div className="relative w-full max-w-xl mx-auto flex items-center bg-white rounded-md p-1.5 shadow-2xl">
+            <div className="relative w-full max-w-xl mx-auto flex items-center bg-white rounded-lg p-1.5 shadow-2xl">
                <Search size={20} className="text-gray-400 mr-3" />
                <input
                   type="text"
                   placeholder="ابحث عن مهارة، برمجة، تسويق..."
-                  className="w-full py-3 px-3 text-base text-[#08090a] outline-none bg-transparent"
+                  className="w-full py-3 px-3 text-base font-bold text-ink outline-none bg-transparent"
                 />
-                <button className="bg-[#08090a] text-white h-12 px-8 text-sm font-medium rounded hover:bg-gray-800 transition-colors shrink-0">
+                <button className="bg-ink text-white h-12 px-8 text-sm font-bold rounded-md hover:bg-gray-800 transition-colors shrink-0">
                   ابحث
                 </button>
             </div>
             
-            <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-white/90 font-medium">
+            <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-white/90 font-bold">
               <span className="flex items-center gap-2 drop-shadow"><Shield size={18} className="text-[#34d399]" /> حماية DRM</span>
               <span className="flex items-center gap-2 drop-shadow"><BrainCircuit size={18} className="text-[#34d399]" /> معلم ذكي لكل كورس</span>
               <span className="flex items-center gap-2 drop-shadow"><MonitorPlay size={18} className="text-[#34d399]" /> وصول مدى الحياة</span>
@@ -155,20 +149,20 @@ export default function GlobalPlatformHome() {
           </div>
         </section>
 
-        {/* 3. Floating UI Mockup (Mintlify Signature) */}
+        {/* 3. Floating UI Mockup */}
         <section className="relative z-20 -mt-24 max-w-5xl mx-auto px-6 mb-24">
            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 text-black grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-50 p-4 rounded-xl flex flex-col justify-between border border-gray-100">
-                 <div className="text-xs font-bold text-[#0c8c5e] uppercase tracking-wider">نموذج قاعة الدرس</div>
-                 <div className="font-semibold text-sm mt-2">أساسيات البرمجة الذكية</div>
-                 <div className="text-xs text-black/60 mt-4 flex items-center gap-1"><PlayCircle size={14} className="text-[#0c8c5e]" /> فيديو مشفر بتقنية متقدمة</div>
+                 <div className="text-xs font-bold text-mint uppercase tracking-wider">نموذج قاعة الدرس</div>
+                 <div className="font-bold text-sm mt-2">أساسيات البرمجة الذكية</div>
+                 <div className="text-xs text-gray-500 mt-4 flex items-center gap-1 font-bold"><PlayCircle size={14} className="text-mint" /> فيديو مشفر بتقنية متقدمة</div>
               </div>
-              <div className="bg-[#0c8c5e]/5 border border-[#0c8c5e]/10 p-5 rounded-xl md:col-span-2 flex flex-col justify-between">
-                 <div className="flex items-center gap-2 text-[#0c8c5e] font-semibold text-sm">
+              <div className="bg-mint/5 border border-mint/10 p-5 rounded-xl md:col-span-2 flex flex-col justify-between">
+                 <div className="flex items-center gap-2 text-mint font-bold text-sm">
                     <BrainCircuit size={18} /> المعلم الذكي (AI Tutor) متصل
                  </div>
-                 <p className="text-xs text-black/70 mt-3 font-medium">طالب: "كيف يمكنني تطبيق هذه الدالة في مشروع بايثون العملي الخاص بي؟"</p>
-                 <div className="bg-white p-3 rounded-lg text-xs text-black/90 mt-2 shadow-sm border border-gray-100 leading-relaxed">
+                 <p className="text-xs text-gray-700 mt-3 font-bold">طالب: "كيف يمكنني تطبيق هذه الدالة في مشروع بايثون العملي الخاص بي؟"</p>
+                 <div className="bg-white p-3 rounded-lg text-xs font-bold text-ink mt-2 shadow-sm border border-gray-100 leading-relaxed">
                     المعلم الذكي: "يمكنك استخدامها مباشرة عبر استدعاء المكتبة كما هو موضح بالتفصيل في الدقيقة 4:12 من هذا الدرس. دعني أكتب لك مثالاً برمجياً..."
                  </div>
               </div>
@@ -179,18 +173,18 @@ export default function GlobalPlatformHome() {
         <section className="py-16 px-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="mb-12 text-center md:text-right">
-               <div className="text-[13px] font-medium text-[#0c8c5e] uppercase tracking-[0.05em] mb-2">التصنيفات الرئيسية</div>
-               <h2 className="text-3xl font-bold text-[#08090a] tracking-tight">استكشف مجالات المستقبل</h2>
+               <div className="text-[13px] font-bold text-mint uppercase tracking-[0.05em] mb-2">التصنيفات الرئيسية</div>
+               <h2 className="text-3xl font-black text-ink tracking-tight">استكشف مجالات المستقبل</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {categories.map((cat, i) => (
                 <div key={i} className="border border-gray-100 rounded-2xl p-6 hover:border-gray-300 hover:shadow-md transition-all bg-white cursor-pointer group">
-                  <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center mb-5 text-[#0c8c5e] group-hover:bg-[#0c8c5e] group-hover:text-white transition-colors">
+                  <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center mb-5 text-mint group-hover:bg-mint group-hover:text-white transition-colors">
                     {cat.icon}
                   </div>
-                  <h3 className="text-lg font-bold text-[#08090a] mb-1">{cat.title}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{cat.desc}</p>
-                  <span className="text-xs font-bold text-[#0c8c5e]">{cat.count}</span>
+                  <h3 className="text-lg font-bold text-ink mb-1">{cat.title}</h3>
+                  <p className="text-sm font-medium text-gray-500 mb-4">{cat.desc}</p>
+                  <span className="text-xs font-bold text-mint">{cat.count}</span>
                 </div>
               ))}
             </div>
@@ -201,33 +195,33 @@ export default function GlobalPlatformHome() {
         <section id="features" className="py-24 px-6 bg-gray-50 border-y border-gray-100">
           <div className="max-w-7xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-16">
-              <div className="text-xs font-bold text-[#0c8c5e] uppercase tracking-widest mb-4">
+              <div className="text-xs font-bold text-mint uppercase tracking-widest mb-4">
                 قوة الذكاء الاصطناعي
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#08090a] tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-black text-ink tracking-tight">
                 أدوات خارقة للمدرس والطالب
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-[#0c8c5e] mb-6"><BrainCircuit size={36} strokeWidth={1.5} /></div>
-                <h3 className="text-xl font-bold text-[#08090a] mb-3">معلم آلي تفاعلي</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <div className="text-mint mb-6"><BrainCircuit size={36} strokeWidth={1.5} /></div>
+                <h3 className="text-xl font-bold text-ink mb-3">معلم آلي تفاعلي</h3>
+                <p className="text-sm text-gray-600 font-medium leading-relaxed">
                   مساعد ذكي يرافق الطالب أثناء المشاهدة، يجيب على الأسئلة من صميم المادة العلمية، ويرشده لأوقات الشرح داخل الفيديو بدقة.
                 </p>
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-[#08090a] mb-6"><Shield size={36} strokeWidth={1.5} /></div>
-                <h3 className="text-xl font-bold text-[#08090a] mb-3">حماية سينمائية DRM</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <div className="text-ink mb-6"><Shield size={36} strokeWidth={1.5} /></div>
+                <h3 className="text-xl font-bold text-ink mb-3">حماية سينمائية DRM</h3>
+                <p className="text-sm text-gray-600 font-medium leading-relaxed">
                   نحمي محتواك الفكري بتقنيات تشفير قوية تمنع التحميل والإضافات غير القانونية، لتركز أنت على صناعة محتوى عظيم بأمان.
                 </p>
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-[#08090a] mb-6"><Sparkles size={36} strokeWidth={1.5} /></div>
-                <h3 className="text-xl font-bold text-[#08090a] mb-3">مساعد المدرس السحري</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <div className="text-ink mb-6"><Sparkles size={36} strokeWidth={1.5} /></div>
+                <h3 className="text-xl font-bold text-ink mb-3">مساعد المدرس السحري</h3>
+                <p className="text-sm text-gray-600 font-medium leading-relaxed">
                   أدوات ذكية للمحاضرين لتوليد الاختبارات، كتابة وصف الكورسات، وتحليل أداء الطلاب بضغطة زر واحدة.
                 </p>
               </div>
@@ -240,38 +234,38 @@ export default function GlobalPlatformHome() {
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-end mb-12">
                 <div>
-                    <h2 className="text-3xl font-bold text-[#08090a] tracking-tight">أحدث الكورسات المنشورة</h2>
-                    <p className="text-gray-500 mt-2">تعلم من أفضل الخبراء المعتمدين في منصة مسار.</p>
+                    <h2 className="text-3xl font-black text-ink tracking-tight">أحدث الكورسات المنشورة</h2>
+                    <p className="text-gray-500 font-medium mt-2">تعلم من أفضل الخبراء المعتمدين في منصة مسار.</p>
                 </div>
-                <Link href="/courses" className="hidden md:flex items-center gap-2 text-sm font-bold text-[#0c8c5e] hover:underline">
+                <Link href="/courses" className="hidden md:flex items-center gap-2 text-sm font-bold text-mint hover:underline">
                     عرض الكل <ArrowRight size={16} className="rotate-180" />
                 </Link>
             </div>
             
             {isLoadingCourses ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin text-[#0c8c5e]" size={40} />
+                <Loader2 className="animate-spin text-mint" size={40} />
               </div>
             ) : courses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {courses.map((course) => (
                   <Link href={`/courses/${course.slug}`} key={course.id} className="flex flex-col border border-gray-100 rounded-2xl overflow-hidden bg-white hover:shadow-xl hover:border-gray-300 transition-all group no-underline">
-                    <div className="aspect-video bg-[#08090a] flex items-center justify-center relative overflow-hidden">
+                    <div className="aspect-video bg-ink flex items-center justify-center relative overflow-hidden">
                       <MonitorPlay className="text-white/20 group-hover:scale-110 transition-transform duration-500" size={48} />
-                      <div className="absolute top-3 right-3 bg-white/90 text-[#08090a] text-xs font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
-                        <Sparkles size={12} className="text-[#0c8c5e]" /> AI Ready
+                      <div className="absolute top-3 right-3 bg-white/90 text-ink text-xs font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                        <Sparkles size={12} className="text-mint" /> AI Ready
                       </div>
                     </div>
                     <div className="p-6 flex flex-col flex-1">
-                      <h3 className="text-lg font-bold text-[#08090a] mb-2 line-clamp-2">
+                      <h3 className="text-lg font-bold text-ink mb-2 line-clamp-2">
                         {course.title}
                       </h3>
-                      <p className="text-sm text-gray-500 mb-6">{course.profiles?.full_name || 'مدرس معتمد'}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-6">{course.profiles?.full_name || 'مدرس معتمد'}</p>
                       <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
-                        <span className="text-xl font-black text-[#08090a]">
+                        <span className="text-xl font-black text-ink">
                           {course.price > 0 ? `$${course.price}` : 'مجانــــاً'}
                         </span>
-                        <div className="flex items-center gap-1 text-sm font-bold text-[#08090a]">
+                        <div className="flex items-center gap-1 text-sm font-bold text-ink">
                           <Star size={16} className="fill-amber-400 text-amber-400" /> 4.9
                         </div>
                       </div>
@@ -280,76 +274,49 @@ export default function GlobalPlatformHome() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl bg-gray-50 text-gray-500">
+              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl bg-gray-50 text-gray-500 font-bold">
                 لا توجد كورسات متاحة حالياً.
               </div>
             )}
           </div>
         </section>
 
-        {/* 7. FAQ Section */}
-        <section className="py-24 px-6 bg-white border-t border-gray-100">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-[#08090a] mb-12 text-center tracking-tight">
-              الأسئلة الشائعة
-            </h2>
-            <div className="space-y-4">
-              {faqs.map((faq, i) => (
-                <div key={i} className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:border-gray-200 transition-colors">
-                  <button 
-                    onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                    className="w-full text-right p-6 flex justify-between items-center bg-transparent border-none cursor-pointer"
-                  >
-                    <span className="font-bold text-base text-[#08090a]">{faq.q}</span>
-                    <ChevronDown size={20} className={`text-gray-400 transition-transform duration-300 ${activeFaq === i ? 'rotate-180 text-[#0c8c5e]' : ''}`} />
-                  </button>
-                  {activeFaq === i && (
-                    <div className="px-6 pb-6 text-sm leading-relaxed text-gray-600">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
       </main>
 
       {/* 8. Footer */}
-      <footer className="bg-[#08090a] text-white py-16 px-6 border-t border-gray-900">
+      <footer className="bg-ink text-white py-16 px-6 border-t border-gray-900">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
               <Link href="/" className="font-bold flex items-center gap-2 mb-6 text-white no-underline">
                 <Image src="/logo.png" alt="MASAR Logo" width={100} height={30} className="object-contain brightness-0 invert opacity-90" />
               </Link>
-              <p className="text-sm text-gray-400 leading-relaxed pr-2">
+              <p className="text-sm text-gray-400 font-medium leading-relaxed pr-2">
                 منصة مسار هي بيئتك التعليمية المتكاملة المدعومة بالذكاء الاصطناعي لحماية وبيع وتقديم المحتوى بأعلى جودة.
               </p>
             </div>
             <div>
               <h4 className="font-bold text-base mb-6 text-white">المنصة</h4>
-              <ul className="space-y-3 text-sm text-gray-400 list-none p-0">
+              <ul className="space-y-3 text-sm font-medium text-gray-400 list-none p-0">
                 <li><Link href="/courses" className="hover:text-white transition-colors no-underline text-gray-400">تصفح الكورسات</Link></li>
                 <li><Link href="/login" className="hover:text-white transition-colors no-underline text-gray-400">تسجيل كطالب</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-base mb-6 text-white">المميزات</h4>
-              <ul className="space-y-3 text-sm text-gray-400 list-none p-0">
+              <ul className="space-y-3 text-sm font-medium text-gray-400 list-none p-0">
                 <li><span className="hover:text-white cursor-pointer transition-colors">التشفير وحماية DRM</span></li>
                 <li><span className="hover:text-white cursor-pointer transition-colors">المعلم الذكي (AI Tutor)</span></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-base mb-6 text-white">القانونية</h4>
-              <ul className="space-y-3 text-sm text-gray-400 list-none p-0">
+              <ul className="space-y-3 text-sm font-medium text-gray-400 list-none p-0">
                 <li><span className="hover:text-white cursor-pointer transition-colors">شروط الاستخدام</span></li>
                 <li><span className="hover:text-white cursor-pointer transition-colors">سياسة الخصوصية</span></li>
               </ul>
             </div>
         </div>
-        <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex justify-between items-center flex-wrap gap-4 text-xs text-gray-500">
+        <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex justify-between items-center flex-wrap gap-4 text-xs font-bold text-gray-500">
           <div className="flex items-center gap-2">
             <Lock size={14} /> جميع الحقوق محفوظة © 2026 مسار
           </div>
