@@ -76,6 +76,12 @@ export default function GlobalPlatformHome() {
             <nav className="hidden md:flex items-center gap-6 text-sm font-bold text-gray-600">
               <Link href="/courses" className="hover:text-mint transition-colors">تصفح الكورسات</Link>
               <Link href="#features" className="hover:text-mint transition-colors">المميزات السحرية</Link>
+              
+              {/* الرابط الجديد لصفحة الاشتراكات الخاصة بالذكاء الاصطناعي */}
+              <Link href="/pricing" className="text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                 <Sparkles size={14} /> باقات المعلم الذكي
+              </Link>
+
               {/* توجيه صريح للمدرسين */}
               <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="text-mint hover:text-[#0a754f] transition-colors">التدريس في مسار</Link>
             </nav>
