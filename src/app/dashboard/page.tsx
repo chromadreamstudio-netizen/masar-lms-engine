@@ -1,221 +1,153 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { BookOpen, CheckCircle, Clock, PlayCircle, Award, LayoutDashboard } from 'lucide-react';
+import { BookOpen, PlayCircle, Loader2, ArrowLeft, Trophy, LayoutDashboard, LogOut } from 'lucide-react';
+import Image from 'next/image';
 
-export const revalidate = 0; // إلغاء التخزين المؤقت لجلب أحدث البيانات دائماً
+export default function StudentDashboard() {
+  const [user, setUser] = useState<any>(null);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-export default async function DashboardPage() {
-  // التعديل تم هنا: إضافة await
-  const cookieStore = await cookies();
-
-  // 1. إنشاء عميل Supabase على جانب الخادم
-  const supabase = createServerClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // 2. التحقق من جلسة المستخدم الحالي
-  const { data: { user } } = await supabase.auth.getUser();
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUser(user);
 
-  if (!user) {
-    redirect('/login?redirect=/dashboard');
+      // جلب الكورسات التي اشترك بها الطالب
+      const { data: enrollmentData } = await supabase
+        .from('enrollments')
+        .select(`
+          progress,
+          courses ( id, title, slug, description )
+        `)
+        .eq('student_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (enrollmentData) {
+        setEnrollments(enrollmentData);
+      }
+      setIsLoading(false);
+    };
+
+    fetchDashboardData();
+  }, [router, supabase]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-white flex justify-center items-center"><Loader2 className="animate-spin text-[#0c8c5e] w-12 h-12" /></div>;
   }
 
-  // 3. جلب بيانات الاشتراكات والكورسات المرتبطة بالمستخدم
-  const { data: enrollments, error } = await supabase
-    .from('enrollments')
-    .select(`
-      id,
-      status,
-      enrolled_at,
-      courses (
-        id,
-        title,
-        slug,
-        description,
-        thumbnail_url,
-        modules (
-          id,
-          lessons (
-            id
-          )
-        )
-      )
-    `)
-    .eq('user_id', user.id);
-
-  // 4. جلب سجل تقدم الطالب في الدروس
-  const { data: progressData } = await supabase
-    .from('lesson_progress')
-    .select('lesson_id, is_completed')
-    .eq('user_id', user.id);
-
-  const completedLessonIds = new Set(
-    progressData?.filter((p) => p.is_completed).map((p) => p.lesson_id) || []
-  );
-
-  // حساب الإحصائيات العامة
-  const totalEnrolled = enrollments?.length || 0;
-  const totalCompletedLessons = completedLessonIds.size;
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 dir-rtl" dir="rtl">
-      {/* الترويسة الرئيسية */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 text-indigo-400 font-semibold mb-1">
-            <LayoutDashboard className="w-5 h-5" />
-            <span>محرك مسار الذكي | MASAR AI</span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            مرحباً بك، {user.user_metadata?.full_name || user.email?.split('@')[0]} 👋
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            تابع تقدمك الدراسي واستكمل دروسك من حيث توقفت.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/courses"
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition flex items-center gap-2 shadow-lg shadow-indigo-600/20"
-          >
-            <BookOpen className="w-4 h-4" />
-            استكشاف الكورسات
+    <div className="min-h-screen bg-gray-50 text-black font-sans dir-rtl" dir="rtl">
+      
+      {/* Header */}
+      <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center no-underline hover:opacity-80 transition-opacity">
+            <Image src="/logo.png" alt="MASAR Logo" width={100} height={30} className="object-contain" priority />
           </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/courses" className="text-sm font-bold text-gray-600 hover:text-[#0c8c5e] transition-colors">تصفح الكورسات</Link>
+            <div className="w-px h-6 bg-gray-200"></div>
+            <button onClick={handleSignOut} className="text-red-500 hover:text-red-700 p-2 rounded transition-colors flex items-center gap-2 text-sm font-bold">
+              <LogOut size={16} /> خروج
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* بطاقات الإحصائيات السريعة (KPIs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
-          <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-            <BookOpen className="w-6 h-6" />
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        <div className="mb-12">
+          <h1 className="text-3xl font-black text-[#08090a] mb-2 flex items-center gap-3">
+            <LayoutDashboard className="text-[#0c8c5e]" /> لوحة التحكم التعليمية
+          </h1>
+          <p className="text-gray-500 font-medium">مرحباً بك مجدداً. واصل رحلة تعلمك من حيث توقفت.</p>
+        </div>
+
+        {/* إحصائيات سريعة */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-bold mb-1">الكورسات المسجلة</p>
+              <h3 className="text-3xl font-black text-[#08090a]">{enrollments.length}</h3>
+            </div>
+            <div className="w-14 h-14 bg-[#0c8c5e]/10 rounded-xl flex items-center justify-center text-[#0c8c5e]">
+              <BookOpen size={24} />
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-slate-400 font-medium">الكورسات المسجلة</p>
-            <h3 className="text-2xl font-bold text-white mt-0.5">{totalEnrolled}</h3>
+          <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-bold mb-1">شهادات الإنجاز</p>
+              <h3 className="text-3xl font-black text-[#08090a]">0</h3>
+            </div>
+            <div className="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
+              <Trophy size={24} />
+            </div>
           </div>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
-          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400 font-medium">الدروس المكتملة</p>
-            <h3 className="text-2xl font-bold text-white mt-0.5">{totalCompletedLessons}</h3>
-          </div>
-        </div>
-
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
-          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-            <Award className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400 font-medium">حالة الحساب</p>
-            <h3 className="text-lg font-bold text-amber-300 mt-0.5">طالب نشط</h3>
-          </div>
-        </div>
-      </div>
-
-      {/* قسم الكورسات النشطة */}
-      <section>
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-indigo-400" />
-          دوراتي التدريبية
-        </h2>
-
-        {!enrollments || enrollments.length === 0 ? (
-          <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
-            <BookOpen className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-300 mb-1">لم تسجل في أي كورس بعد</h3>
-            <p className="text-slate-500 text-sm max-w-md mx-auto mb-6">
-              استكشف مكتبة الكورسات المتاحة وابدأ رحلة التعلم مع معلم مسار الذكي.
-            </p>
-            <Link
-              href="/courses"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium text-sm transition border border-slate-700"
-            >
-              تصفح الكورسات المتاحة
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {enrollments.map((item: any) => {
-              const course = item.courses;
-              if (!course) return null;
-
-              // تجميع كافة الدروس لحساب نسبة الإنجاز
-              const allLessons = course.modules?.flatMap((m: any) => m.lessons || []) || [];
-              const totalCourseLessons = allLessons.length;
-              const completedInCourse = allLessons.filter((l: any) => completedLessonIds.has(l.id)).length;
-              const progressPercentage = totalCourseLessons > 0 
-                ? Math.round((completedInCourse / totalCourseLessons) * 100) 
-                : 0;
-
+        {/* الكورسات الحالية */}
+        <h2 className="text-2xl font-bold text-[#08090a] mb-6">كورساتي</h2>
+        {enrollments.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {enrollments.map((enrollment, index) => {
+              const course = enrollment.courses;
               return (
-                <div
-                  key={item.id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/5 group"
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                        {course.slug || 'كورس مسار'}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {completedInCourse} / {totalCourseLessons} درس
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors line-clamp-1">
-                      {course.title}
-                    </h3>
-
-                    <p className="text-slate-400 text-sm line-clamp-2 mb-6">
-                      {course.description || 'لا يوجد وصف متاح لهذا الكورس حالياً.'}
-                    </p>
-
-                    {/* شريط التقدم */}
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-400">نسبة الإنجاز</span>
-                        <span className="text-indigo-400">{progressPercentage}%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${progressPercentage}%` }}
-                        />
-                      </div>
-                    </div>
+                <div key={index} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                  <div className="aspect-video bg-[#08090a] flex items-center justify-center relative">
+                    <PlayCircle size={48} className="text-white/20" />
                   </div>
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="font-bold text-lg text-[#08090a] mb-4 line-clamp-2">{course.title}</h3>
+                    
+                    {/* شريط التقدم */}
+                    <div className="mt-auto mb-6">
+                      <div className="flex justify-between text-xs font-bold text-gray-500 mb-2">
+                        <span>نسبة الإنجاز</span>
+                        <span className="text-[#0c8c5e]">{enrollment.progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div className="bg-[#0c8c5e] h-2 rounded-full transition-all" style={{ width: `${enrollment.progress}%` }}></div>
+                      </div>
+                    </div>
 
-                  <div className="p-4 bg-slate-950/50 border-t border-slate-800/80">
-                    <Link
-                      href={`/learn/${course.slug || course.id}`}
-                      className="w-full py-2.5 px-4 bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200"
-                    >
-                      <PlayCircle className="w-4 h-4" />
-                      متابعة التعلم
+                    <Link href={`/learn/${course.slug}`} className="w-full bg-[#08090a] hover:bg-gray-800 text-white text-center py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 text-sm">
+                      متابعة التعلم <ArrowLeft size={16} />
                     </Link>
                   </div>
                 </div>
               );
             })}
           </div>
+        ) : (
+          <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center">
+            <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
+            <h3 className="text-lg font-bold text-[#08090a] mb-2">لم تقم بالتسجيل في أي كورس بعد</h3>
+            <p className="text-gray-500 text-sm mb-6">استكشف مكتبتنا التعليمية وابدأ رحلتك الآن.</p>
+            <Link href="/courses" className="inline-block bg-[#0c8c5e] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#0a754f] transition-colors">
+              تصفح الكورسات
+            </Link>
+          </div>
         )}
-      </section>
+      </main>
     </div>
   );
 }
