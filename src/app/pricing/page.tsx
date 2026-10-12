@@ -7,7 +7,7 @@ import { Check, X, Sparkles, BrainCircuit, Shield, Zap } from 'lucide-react';
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
 
-  // تعريف الباقات
+  // تعريف الباقات مع روابط الدفع
   const plans = [
     {
       name: 'الأساسية',
@@ -16,6 +16,8 @@ export default function PricingPage() {
       buttonText: 'ابدأ مجاناً',
       buttonStyle: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
       popular: false,
+      href: '/login?redirect=/instructor', // يوجهه للتسجيل في المنصة
+      target: '_self'
     },
     {
       name: 'مسار برو (AI)',
@@ -26,6 +28,9 @@ export default function PricingPage() {
       buttonStyle: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg',
       popular: true,
       badge: 'الأكثر طلباً',
+      // رابط Lemon Squeezy الخاص بك
+      href: 'https://kian-agentnet1.lemonsqueezy.com/checkout/buy/d81c4193-b618-416f-b21c-0608fe1fcf0d', 
+      target: '_blank' // يفتح صفحة الدفع في نافذة جديدة
     },
     {
       name: 'المؤسسات',
@@ -34,6 +39,8 @@ export default function PricingPage() {
       buttonText: 'تواصل معنا',
       buttonStyle: 'bg-gray-900 text-white hover:bg-gray-800',
       popular: false,
+      href: 'mailto:ceo@masar.com', // يفتح تطبيق البريد للتواصل معك
+      target: '_blank'
     },
   ];
 
@@ -115,9 +122,16 @@ export default function PricingPage() {
                 <span className="text-4xl font-extrabold text-gray-900">{plan.price}</span>
                 {plan.period && <span className="text-gray-500 text-lg font-medium">{plan.period}</span>}
               </div>
-              <button className={`w-full py-3.5 rounded-lg font-bold text-sm transition-all mt-auto ${plan.buttonStyle}`}>
+              
+              {/* زر الاشتراك مبرمج برابط الدفع المباشر */}
+              <a 
+                href={plan.href}
+                target={plan.target}
+                rel={plan.target === '_blank' ? "noopener noreferrer" : ""}
+                className={`w-full py-3.5 rounded-lg font-bold text-sm transition-all mt-auto text-center block ${plan.buttonStyle}`}
+              >
                 {plan.buttonText}
-              </button>
+              </a>
             </div>
           ))}
         </div>
@@ -152,8 +166,6 @@ export default function PricingPage() {
                           <td className="px-6 py-4 text-sm font-medium text-gray-700 border-l border-gray-100">
                             {item.name}
                           </td>
-                          
-                          {/* Free Column */}
                           <td className="px-6 py-4 text-center border-l border-gray-100">
                             {typeof item.free === 'boolean' ? (
                               item.free ? <Check className="mx-auto text-green-500" size={20} /> : <X className="mx-auto text-gray-300" size={20} />
@@ -161,8 +173,6 @@ export default function PricingPage() {
                               <span className="text-sm text-gray-600 font-bold">{item.free}</span>
                             )}
                           </td>
-                          
-                          {/* Pro Column */}
                           <td className="px-6 py-4 text-center bg-indigo-50/30 border-l border-gray-100">
                             {typeof item.pro === 'boolean' ? (
                               item.pro ? <Check className="mx-auto text-indigo-600" size={20} /> : <X className="mx-auto text-gray-300" size={20} />
@@ -170,8 +180,6 @@ export default function PricingPage() {
                               <span className="text-sm text-indigo-700 font-bold">{item.pro}</span>
                             )}
                           </td>
-                          
-                          {/* Enterprise Column */}
                           <td className="px-6 py-4 text-center">
                             {typeof item.enterprise === 'boolean' ? (
                               item.enterprise ? <Check className="mx-auto text-green-500" size={20} /> : <X className="mx-auto text-gray-300" size={20} />
