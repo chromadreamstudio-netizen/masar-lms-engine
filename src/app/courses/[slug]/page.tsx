@@ -111,7 +111,7 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-sm font-bold text-mint">
               <Link className="hover:underline" href="/courses">الكورسات</Link>
-              <ChevronRight className="rotate-180" size="{16}"/>
+              <ChevronRight className="rotate-180" size={16} />
               <span>عام</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-ink tracking-tight">{course?.title}</h1>
@@ -123,7 +123,7 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {['إتقان المهارات الأساسية والمتقدمة من الصفر', 'بناء مشاريع عملية', 'التفاعل المباشر مع الذكاء الاصطناعي', 'الحصول على أفضل الممارسات'].map((text, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <div className="mt-0.5 text-mint"><Check size="{18}" strokeWidth="{3}"/></div>
+                  <div className="mt-0.5 text-mint"><Check size={18} strokeWidth={3} /></div>
                   <span className="text-sm font-bold text-gray-700 leading-relaxed">{text}</span>
                 </div>
               ))}
@@ -142,7 +142,7 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
                     {module.lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((lesson: any) => (
                       <div key={lesson.id} className="flex items-center justify-between text-sm font-bold group">
                         <div className="flex items-center gap-3 text-gray-600 group-hover:text-mint transition-colors">
-                          <PlayCircle "text-gray-300"} "text-mint" : ? className="{lesson.is_free_preview" size="{18}"/>
+                          <PlayCircle size={18} className={lesson.is_free_preview ? "text-mint" : "text-gray-300"} />
                           <span>{lesson.title}</span>
                         </div>
                       </div>
@@ -158,7 +158,7 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
           <div className="sticky top-24 border border-gray-200 bg-white rounded-2xl overflow-hidden shadow-md p-1.5">
             <div className="w-full h-56 bg-ink rounded-xl flex items-center justify-center relative group cursor-pointer overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-ink to-mint/20 z-10"></div>
-              <PlayCircle className="text-white z-20 opacity-90 group-hover:scale-110 transition-transform" size="{56}"/>
+              <PlayCircle size={56} className="text-white z-20 opacity-90 group-hover:scale-110 transition-transform" />
             </div>
             <div className="p-6">
               <div className="text-4xl font-black text-ink mb-6">${course?.price || '0'}</div>
