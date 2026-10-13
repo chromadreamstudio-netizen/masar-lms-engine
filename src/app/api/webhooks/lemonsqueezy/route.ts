@@ -3,8 +3,8 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
 // تعريف أرقام المنتجات (Product IDs) التي جلبناها من Lemon Squeezy
-const PRO_PLAN_ID = '1434689';
-const PYTHON_COURSE_ID = '1435168';
+const PRO_PLAN_ID = '1436897';
+const PYTHON_COURSE_ID = '1436914';
 
 export async function POST(req: Request) {
   try {
