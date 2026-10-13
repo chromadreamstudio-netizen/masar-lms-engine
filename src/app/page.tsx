@@ -59,7 +59,7 @@ export default function GlobalPlatformHome() {
   return (
     <div className="min-h-screen bg-white text-black font-sans" dir="rtl">
       
-      {/* 1. Header (Smart Routing Integration) */}
+      {/* 1. Header */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -107,15 +107,20 @@ export default function GlobalPlatformHome() {
       </header>
 
       <main>
-        {/* 2. Hero Section (Mintlify Style: Dark Teal to Monastic White with Clouds) */}
-        {/* The background uses a strict teal gradient fading into white, typical of the Mintlify brand identity */}
-        <section className="relative pt-32 pb-40 overflow-hidden bg-gradient-to-b from-[#0d3b45] via-[#10535e] to-white text-white">
+        {/* 2. Hero Section (Mintlify Style with Actual Clouds Image) */}
+        <section className="relative pt-32 pb-40 overflow-hidden bg-[#0d3b45] text-white">
           
-          {/* Hand-illustrated cloud effect (Pure CSS solution replacing the image for better load times) */}
-          <div className="absolute bottom-0 left-0 w-full h-1/2 opacity-70 pointer-events-none mix-blend-overlay">
-             <div className="absolute bottom-0 left-10 w-96 h-96 bg-white rounded-full filter blur-[80px] opacity-40 mix-blend-soft-light"></div>
-             <div className="absolute bottom-20 right-20 w-80 h-80 bg-[#34d399] rounded-full filter blur-[100px] opacity-20 mix-blend-screen"></div>
-             <div className="absolute -bottom-10 left-1/3 w-[500px] h-[500px] bg-white rounded-full filter blur-[100px] opacity-50 mix-blend-overlay"></div>
+          {/* خلفية السحب الحقيقية */}
+          <div className="absolute inset-0 z-0">
+             <Image 
+               src="/clouds-bg.png" 
+               alt="Masar Clouds Background" 
+               fill 
+               className="object-cover opacity-60 mix-blend-luminosity" 
+               priority
+             />
+             {/* تدرج لوني خفيف لدمج الصورة مع اللون الأبيض في الأسفل */}
+             <div className="absolute inset-0 bg-gradient-to-b from-[#0d3b45]/80 via-[#10535e]/60 to-white"></div>
           </div>
 
           <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
@@ -127,7 +132,7 @@ export default function GlobalPlatformHome() {
             <h1 className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tight text-white drop-shadow-lg">
               المنصة الذكية <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#34d399]">لصناعة المعرفة</span>
             </h1>
-            <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-2xl mx-auto font-medium">
+            <p className="text-lg text-white/90 leading-relaxed mb-10 max-w-2xl mx-auto font-medium drop-shadow-md">
               تدمج منصة مسار التشفير العسكري للمحتوى مع سحر الذكاء الاصطناعي التفاعلي لتجربة تعليمية فريدة من نوعها.
             </p>
             
@@ -144,7 +149,6 @@ export default function GlobalPlatformHome() {
             </div>
             
             <div className="mt-12 flex justify-center gap-4">
-              {/* التعديل التسويقي: استكشف الكورسات */}
                <Link href="/courses" className="text-sm font-bold bg-white text-ink px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors shadow-lg border border-gray-100">
                   استكشف الكورسات
                </Link>
@@ -155,7 +159,7 @@ export default function GlobalPlatformHome() {
           </div>
         </section>
 
-        {/* 3. Floating UI Mockup (Mintlify Glass Desk Style) */}
+        {/* 3. Floating UI Mockup */}
         <section className="relative z-20 -mt-24 max-w-5xl mx-auto px-6 mb-24">
            <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 p-6 text-black grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-50/80 p-4 rounded-xl flex flex-col justify-between border border-gray-100 backdrop-blur-sm">
@@ -169,7 +173,6 @@ export default function GlobalPlatformHome() {
                  </div>
                  <p className="text-xs text-gray-700 mt-3 font-bold">طالب: "كيف يمكنني تطبيق هذه الدالة في مشروع بايثون العملي الخاص بي؟"</p>
                  <div className="bg-white p-3 rounded-lg text-xs font-bold text-ink mt-2 shadow-sm border border-gray-100 leading-relaxed relative">
-                    {/* Mintlify Active State Green Dot */}
                     <div className="absolute -left-1 -top-1 w-3 h-3 bg-mint rounded-full border-2 border-white shadow-sm"></div>
                     المعلم الذكي: "يمكنك استخدامها مباشرة عبر استدعاء المكتبة كما هو موضح بالتفصيل في الدقيقة 4:12 من هذا الدرس. دعني أكتب لك مثالاً برمجياً..."
                  </div>
@@ -177,7 +180,7 @@ export default function GlobalPlatformHome() {
            </div>
         </section>
 
-        {/* 4. Categories Section (Monastic White Background) */}
+        {/* 4. Categories Section */}
         <section className="py-16 px-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="mb-12 text-center md:text-right">
@@ -291,7 +294,7 @@ export default function GlobalPlatformHome() {
 
       </main>
 
-      {/* 8. Footer (Dark Ink replacing True Black) */}
+      {/* 8. Footer */}
       <footer className="bg-[#0c1117] text-white py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
