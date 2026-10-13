@@ -7,7 +7,7 @@ import { Check, X, Sparkles, BrainCircuit, Shield, Zap } from 'lucide-react';
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
 
-  // تعريف الباقات مع روابط الدفع
+  // تعريف الباقات مع روابط الدفع الحقيقية
   const plans = [
     {
       name: 'الأساسية',
@@ -28,9 +28,9 @@ export default function PricingPage() {
       buttonStyle: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg',
       popular: true,
       badge: 'الأكثر طلباً',
-      // الرابط الجديد الاحترافي الخاص بمتجر مسار
-      href: 'https://masar-platform.lemonsqueezy.com/checkout/buy/34ee4279-f45a-4420-a599-efb7f6b80610', 
-      target: '_blank' // يفتح صفحة الدفع في نافذة جديدة
+      // تم تحديث هذا الرابط للرابط الحي (Live Mode) الخاص بباقة المدرسين
+      href: 'https://masar-platform.lemonsqueezy.com/checkout/buy/34186278-24fc-4584-be7c-abbca4ca94d0', 
+      target: '_blank' 
     },
     {
       name: 'المؤسسات',
