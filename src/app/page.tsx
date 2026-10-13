@@ -15,7 +15,6 @@ export default function GlobalPlatformHome() {
   const [user, setUser] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const router = useRouter();
 
   const supabase = createBrowserClient(
@@ -50,12 +49,6 @@ export default function GlobalPlatformHome() {
     router.refresh();
   };
 
-  const faqs = [
-    { q: 'كيف يعمل المعلم الذكي (AI Tutor) في مسار؟', a: 'يتم تدريب المعلم الذكي حصرياً على المادة العلمية الخاصة بكل كورس بواسطة المحاضر للإجابة على استفسارات الطلاب بدقة، وإرشادهم للدقيقة المناسبة داخل الدرس.' },
-    { q: 'هل يمكنني الانضمام كصانع محتوى (محاضر)؟', a: 'نعم بالتأكيد، توفر لك مسار أدوات متكاملة لحماية محتواك بتشفير DRM وبيع كورساتك بحرية.' },
-    { q: 'هل الفيديوهات محمية من السرقة؟', a: 'نعم، نستخدم تقنيات التشفير المتقدمة (DRM) بالتعاون مع Bunny.net لمنع تحميل المحتوى.' }
-  ];
-
   const categories = [
     { title: 'البرمجة والتطوير', icon: <Code size={24} />, count: '١٢٠+ كورس', desc: 'ويب، تطبيقات، ذكاء اصطناعي' },
     { title: 'الذكاء الاصطناعي', icon: <BrainCircuit size={24} />, count: '٤٥+ كورس', desc: 'تعلم الآلة والـ Prompt Engineering' },
@@ -77,19 +70,16 @@ export default function GlobalPlatformHome() {
               <Link href="/courses" className="hover:text-mint transition-colors">تصفح الكورسات</Link>
               <Link href="#features" className="hover:text-mint transition-colors">المميزات السحرية</Link>
               
-              {/* الرابط الجديد لصفحة الاشتراكات الخاصة بالذكاء الاصطناعي */}
-              <Link href="/pricing" className="text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+              <Link href="/pricing" className="text-mint hover:text-[#0a754f] transition-colors flex items-center gap-1">
                  <Sparkles size={14} /> باقات المعلم الذكي
               </Link>
 
-              {/* توجيه صريح للمدرسين */}
               <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="text-mint hover:text-[#0a754f] transition-colors">التدريس في مسار</Link>
             </nav>
           </div>
 
           <div>
             {user ? (
-              // مسار المستخدم المسجل (فصل واضح بين لوحة الطالب والمدرس)
               <div className="flex items-center gap-3">
                  <Link href="/dashboard" className="text-sm font-bold text-ink bg-gray-100 px-4 py-2 rounded-lg transition-colors hover:bg-gray-200 flex items-center gap-2">
                     <GraduationCap size={16} /> لوحة الطالب
@@ -103,13 +93,12 @@ export default function GlobalPlatformHome() {
                   </button>
               </div>
             ) : (
-              // مسار الزائر (توجيه دقيق لنقاط الدخول)
               <div className="flex items-center gap-3">
                 <Link href="/login?redirect=/dashboard" className="text-sm font-bold text-ink px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors">
                   دخول الطالب
                 </Link>
-                <Link href="/login?redirect=/dashboard" className="text-sm font-bold bg-ink text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition-colors shadow-sm">
-                  ابدأ التعلم مجاناً
+                <Link href="/login?redirect=/dashboard" className="text-sm font-bold bg-mint text-white px-5 py-2 rounded-lg hover:bg-[#0a754f] transition-colors shadow-sm">
+                  دخول المدرس
                 </Link>
               </div>
             )}
@@ -118,64 +107,77 @@ export default function GlobalPlatformHome() {
       </header>
 
       <main>
-        {/* 2. Hero Section (Authentic Mintlify Aesthetic) */}
-        <section className="relative pt-24 pb-48 overflow-hidden bg-gradient-to-b from-[#0f4c5c] via-[#0b7a66] to-[#0c8c5e] text-white">
-          <div className="absolute bottom-0 left-0 w-full h-2/3 bg-[url('/clouds.png')] bg-bottom bg-no-repeat bg-contain opacity-80 pointer-events-none mix-blend-overlay"></div>
+        {/* 2. Hero Section (Mintlify Style: Dark Teal to Monastic White with Clouds) */}
+        {/* The background uses a strict teal gradient fading into white, typical of the Mintlify brand identity */}
+        <section className="relative pt-32 pb-40 overflow-hidden bg-gradient-to-b from-[#0d3b45] via-[#10535e] to-white text-white">
+          
+          {/* Hand-illustrated cloud effect (Pure CSS solution replacing the image for better load times) */}
+          <div className="absolute bottom-0 left-0 w-full h-1/2 opacity-70 pointer-events-none mix-blend-overlay">
+             <div className="absolute bottom-0 left-10 w-96 h-96 bg-white rounded-full filter blur-[80px] opacity-40 mix-blend-soft-light"></div>
+             <div className="absolute bottom-20 right-20 w-80 h-80 bg-[#34d399] rounded-full filter blur-[100px] opacity-20 mix-blend-screen"></div>
+             <div className="absolute -bottom-10 left-1/3 w-[500px] h-[500px] bg-white rounded-full filter blur-[100px] opacity-50 mix-blend-overlay"></div>
+          </div>
 
           <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold mb-8 uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 bg-[#34d399]/10 border border-[#34d399]/30 text-[#34d399] px-4 py-1.5 rounded-full text-xs font-bold mb-8 uppercase tracking-wider backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse"></span>
               المنصة التعليمية الأولى المدعومة بالذكاء الاصطناعي
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 tracking-tight text-white drop-shadow-lg">
-              تعلم، وعَلِّم، بذكاء <br /> لم يسبق له مثيل.
+            <h1 className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tight text-white drop-shadow-lg">
+              المنصة الذكية <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#34d399]">لصناعة المعرفة</span>
             </h1>
-            <p className="text-lg text-white/90 leading-relaxed mb-10 max-w-2xl mx-auto font-medium drop-shadow-md">
+            <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-2xl mx-auto font-medium">
               تدمج منصة مسار التشفير العسكري للمحتوى مع سحر الذكاء الاصطناعي التفاعلي لتجربة تعليمية فريدة من نوعها.
             </p>
             
-            <div className="relative w-full max-w-xl mx-auto flex items-center bg-white rounded-lg p-1.5 shadow-2xl">
+            <div className="relative w-full max-w-xl mx-auto flex items-center bg-white rounded-xl p-1.5 shadow-2xl border border-gray-100">
                <Search size={20} className="text-gray-400 mr-3" />
                <input
                   type="text"
                   placeholder="ابحث عن مهارة، برمجة، تسويق..."
                   className="w-full py-3 px-3 text-base font-bold text-ink outline-none bg-transparent"
                 />
-                <button className="bg-ink text-white h-12 px-8 text-sm font-bold rounded-md hover:bg-gray-800 transition-colors shrink-0">
+                <button className="bg-ink text-white h-12 px-8 text-sm font-bold rounded-lg hover:bg-gray-800 transition-colors shrink-0">
                   ابحث
                 </button>
             </div>
             
-            <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-white/90 font-bold">
-              <span className="flex items-center gap-2 drop-shadow"><Shield size={18} className="text-[#34d399]" /> حماية DRM</span>
-              <span className="flex items-center gap-2 drop-shadow"><BrainCircuit size={18} className="text-[#34d399]" /> معلم ذكي لكل كورس</span>
-              <span className="flex items-center gap-2 drop-shadow"><MonitorPlay size={18} className="text-[#34d399]" /> وصول مدى الحياة</span>
+            <div className="mt-12 flex justify-center gap-4">
+              {/* التعديل التسويقي: استكشف الكورسات */}
+               <Link href="/courses" className="text-sm font-bold bg-white text-ink px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors shadow-lg border border-gray-100">
+                  استكشف الكورسات
+               </Link>
+               <Link href="/pricing" className="text-sm font-bold bg-transparent border border-[#34d399]/30 text-white px-8 py-3 rounded-xl hover:bg-[#34d399]/10 transition-colors backdrop-blur-sm">
+                  باقات المدرسين
+               </Link>
             </div>
           </div>
         </section>
 
-        {/* 3. Floating UI Mockup */}
+        {/* 3. Floating UI Mockup (Mintlify Glass Desk Style) */}
         <section className="relative z-20 -mt-24 max-w-5xl mx-auto px-6 mb-24">
-           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 text-black grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-50 p-4 rounded-xl flex flex-col justify-between border border-gray-100">
+           <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 p-6 text-black grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gray-50/80 p-4 rounded-xl flex flex-col justify-between border border-gray-100 backdrop-blur-sm">
                  <div className="text-xs font-bold text-mint uppercase tracking-wider">نموذج قاعة الدرس</div>
                  <div className="font-bold text-sm mt-2">أساسيات البرمجة الذكية</div>
                  <div className="text-xs text-gray-500 mt-4 flex items-center gap-1 font-bold"><PlayCircle size={14} className="text-mint" /> فيديو مشفر بتقنية متقدمة</div>
               </div>
-              <div className="bg-mint/5 border border-mint/10 p-5 rounded-xl md:col-span-2 flex flex-col justify-between">
+              <div className="bg-mint/5 border border-mint/20 p-5 rounded-xl md:col-span-2 flex flex-col justify-between">
                  <div className="flex items-center gap-2 text-mint font-bold text-sm">
                     <BrainCircuit size={18} /> المعلم الذكي (AI Tutor) متصل
                  </div>
                  <p className="text-xs text-gray-700 mt-3 font-bold">طالب: "كيف يمكنني تطبيق هذه الدالة في مشروع بايثون العملي الخاص بي؟"</p>
-                 <div className="bg-white p-3 rounded-lg text-xs font-bold text-ink mt-2 shadow-sm border border-gray-100 leading-relaxed">
+                 <div className="bg-white p-3 rounded-lg text-xs font-bold text-ink mt-2 shadow-sm border border-gray-100 leading-relaxed relative">
+                    {/* Mintlify Active State Green Dot */}
+                    <div className="absolute -left-1 -top-1 w-3 h-3 bg-mint rounded-full border-2 border-white shadow-sm"></div>
                     المعلم الذكي: "يمكنك استخدامها مباشرة عبر استدعاء المكتبة كما هو موضح بالتفصيل في الدقيقة 4:12 من هذا الدرس. دعني أكتب لك مثالاً برمجياً..."
                  </div>
               </div>
            </div>
         </section>
 
-        {/* 4. Categories Section */}
+        {/* 4. Categories Section (Monastic White Background) */}
         <section className="py-16 px-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="mb-12 text-center md:text-right">
@@ -184,8 +186,8 @@ export default function GlobalPlatformHome() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {categories.map((cat, i) => (
-                <div key={i} className="border border-gray-100 rounded-2xl p-6 hover:border-gray-300 hover:shadow-md transition-all bg-white cursor-pointer group">
-                  <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center mb-5 text-mint group-hover:bg-mint group-hover:text-white transition-colors">
+                <div key={i} className="border border-gray-100 rounded-2xl p-6 hover:border-gray-200 hover:shadow-sm transition-all bg-white cursor-pointer group">
+                  <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center mb-5 text-mint group-hover:bg-mint/10 transition-colors">
                     {cat.icon}
                   </div>
                   <h3 className="text-lg font-bold text-ink mb-1">{cat.title}</h3>
@@ -255,7 +257,7 @@ export default function GlobalPlatformHome() {
             ) : courses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {courses.map((course) => (
-                  <Link href={`/courses/${course.slug}`} key={course.id} className="flex flex-col border border-gray-100 rounded-2xl overflow-hidden bg-white hover:shadow-xl hover:border-gray-300 transition-all group no-underline">
+                  <Link href={`/courses/${course.slug}`} key={course.id} className="flex flex-col border border-gray-100 rounded-2xl overflow-hidden bg-white hover:shadow-xl hover:border-gray-200 transition-all group no-underline">
                     <div className="aspect-video bg-ink flex items-center justify-center relative overflow-hidden">
                       <MonitorPlay className="text-white/20 group-hover:scale-110 transition-transform duration-500" size={48} />
                       <div className="absolute top-3 right-3 bg-white/90 text-ink text-xs font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
@@ -289,8 +291,8 @@ export default function GlobalPlatformHome() {
 
       </main>
 
-      {/* 8. Footer */}
-      <footer className="bg-ink text-white py-16 px-6 border-t border-gray-900">
+      {/* 8. Footer (Dark Ink replacing True Black) */}
+      <footer className="bg-[#0c1117] text-white py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
               <Link href="/" className="font-bold flex items-center gap-2 mb-6 text-white no-underline">
