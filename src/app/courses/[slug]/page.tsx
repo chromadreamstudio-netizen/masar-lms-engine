@@ -51,6 +51,7 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
 
   const totalLessons = modules?.reduce((acc, mod) => acc + (mod.lessons?.length || 0), 0) || 0;
 
+  // 🛠️ الدالة المعدلة بذكاء لمعالجة الدفع أو التسجيل المجاني
   const handleEnrollment = async () => {
     setIsEnrolling(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -60,6 +61,15 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
       return;
     }
     
+    // التحقق المالي: هل الكورس مدفوع؟
+    if (course.price && course.price > 0) {
+      // توجيه الطالب إلى رابط Lemon Squeezy الخاص بالكورس المدفوع
+      // (مستقبلاً سنجعل هذا الرابط يقرأ ديناميكياً من قاعدة البيانات course.checkout_url)
+      window.location.href = 'https://masar-platform.lemonsqueezy.com/checkout/buy/acdd539e-397f-40df-b90b-ae76d3928aa4';
+      return;
+    }
+
+    // إذا كان الكورس مجانياً، يتم التسجيل المباشر
     const { error } = await supabase.from('enrollments').upsert({
       student_id: user.id,
       course_id: course.id,
@@ -154,8 +164,12 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
             <div className="p-6">
               <div className="text-4xl font-black text-ink mb-6">${course.price || '0'}</div>
               <div className="space-y-3 mb-8">
-                <button onClick={handleEnrollment} disabled={isEnrolling} className="w-full bg-ink hover:bg-gray-800 text-white py-4 rounded-xl font-black text-base transition-all shadow-sm flex justify-center items-center gap-2 disabled:opacity-50">
-                  {isEnrolling ? <Loader2 className="w-5 h-5 animate-spin" /> : 'الاشتراك وبدء التعلم'}
+                <button 
+                  onClick={handleEnrollment} 
+                  disabled={isEnrolling} 
+                  className="w-full bg-ink hover:bg-gray-800 text-white py-4 rounded-xl font-black text-base transition-all shadow-sm flex justify-center items-center gap-2 disabled:opacity-50"
+                >
+                  {isEnrolling ? <Loader2 className="w-5 h-5 animate-spin" /> : (course.price > 0 ? 'شراء الكورس الآن' : 'الاشتراك مجاناً')}
                 </button>
               </div>
             </div>
