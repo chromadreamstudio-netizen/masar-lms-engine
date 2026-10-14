@@ -1,177 +1,193 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Users, BookOpen, BrainCircuit, Activity, 
-  PlusCircle, ShieldCheck, ArrowUpRight, ArrowLeft 
+  ShieldCheck, Loader2, CheckCircle, XCircle, 
+  Search, Video, BookOpen, AlertTriangle
 } from 'lucide-react';
 
-export const revalidate = 0;
+export default function SuperAdminDashboard() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-export default async function AdminDashboardPage() {
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // 1. التحقق من هوية وصلاحية المدير
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login?redirect=/admin');
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+      // 1. التحقق من صلاحيات المدير (Super Admin)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
-  if (profile?.role !== 'admin') {
-    redirect('/dashboard'); // طرد أي مستخدم عادي إلى لوحة الطالب
+      if (profile?.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+
+      setIsAdmin(true);
+
+      // 2. جلب كل الكورسات، مرتبة بالأحدث، وجلب اسم المدرس معها
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          profiles:instructor_id (full_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (coursesData) {
+        setCourses(coursesData);
+      }
+      setIsLoading(false);
+    };
+
+    fetchAdminData();
+  }, [router, supabase]);
+
+  const handleUpdateStatus = async (courseId: string, newStatus: string) => {
+    setActionLoading(courseId);
+    
+    // إذا كانت الحالة القديمة للنشر (published)، نوقفها ونجعل الحالة الجديدة سارية
+    const isPublished = newStatus === 'approved';
+
+    const { error } = await supabase
+      .from('courses')
+      .update({ 
+        status: newStatus,
+        is_published: isPublished // نحدث القديم والجديد لتجنب أي تعارض في العرض
+      })
+      .eq('id', courseId);
+
+    if (!error) {
+      setCourses(courses.map(c => c.id === courseId ? { ...c, status: newStatus, is_published: isPublished } : c));
+    } else {
+      alert('حدث خطأ أثناء التحديث');
+    }
+    setActionLoading(null);
+  };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 className="w-12 h-12 text-blue-600 animate-spin" /></div>;
   }
 
-  // 2. تجميع الإحصائيات السحابية الحية
-  const [{ count: totalStudents }, { count: totalCourses }, { data: courses }] = await Promise.all([
-    supabase.from('enrollments').select('*', { count: 'exact', head: true }),
-    supabase.from('courses').select('*', { count: 'exact', head: true }),
-    supabase.from('courses').select('id, title, slug, is_published, price, created_at').order('created_at', { ascending: false })
-  ]);
+  if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 dir-rtl" dir="rtl">
-      
-      {/* الترويسة العلوية للإدارة */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 text-[#00a88f] font-semibold mb-1 text-sm">
-            <ShieldCheck className="w-5 h-5" />
-            <span>لوحة التحكم المركزية | MASAR CMS Engine</span>
+    <div className="min-h-screen bg-slate-50 text-slate-900 p-6 md:p-10 font-sans" dir="rtl">
+      <div className="max-w-7xl mx-auto">
+        
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-200">
+          <div>
+            <div className="flex items-center gap-2 text-blue-600 font-bold mb-2">
+              <ShieldCheck className="w-6 h-6" />
+              <span>لوحة الإدارة المركزية (Super Admin)</span>
+            </div>
+            <h1 className="text-3xl font-black text-slate-900">مراجعة واعتماد الكورسات</h1>
           </div>
-          <h1 className="text-3xl font-extrabold text-white">إدارة منصة مسار العالمية</h1>
-          <p className="text-slate-400 text-xs mt-1">
-            التحكم في المناهج التعليمية، حسابات الطلاب، وتكاليف الذكاء الاصطناعي.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition flex items-center gap-2 border border-slate-700"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            معاينة حساب الطالب
+          <Link href="/dashboard" className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition shadow-sm">
+            العودة للرئيسية
           </Link>
-          <Link
-            href="/admin/courses/new"
-            className="px-5 py-2.5 rounded-xl bg-[#00a88f] hover:bg-[#008f7a] text-white font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-[#00a88f]/20"
-          >
-            <PlusCircle className="w-4 h-4" />
-            إضافة كورس جديد
-          </Link>
-        </div>
-      </header>
+        </header>
 
-      {/* بطاقات المؤشرات الرئيسية (KPIs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-slate-400 font-medium">الطلاب المسجلين</span>
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-              <Users size={18} />
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="font-bold text-lg text-slate-800">الكورسات المرفوعة على المنصة</h2>
+            <div className="relative">
+              <Search className="w-5 h-5 absolute right-3 top-2.5 text-slate-400" />
+              <input type="text" placeholder="ابحث عن كورس..." className="pl-4 pr-10 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 w-64" />
             </div>
           </div>
-          <h3 className="text-3xl font-black text-white">{totalStudents || 0}</h3>
-          <span className="text-[11px] text-emerald-400 mt-2 block">اشتراكات مفعلة</span>
-        </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-slate-400 font-medium">الكورسات المتاحة</span>
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <BookOpen size={18} />
-            </div>
-          </div>
-          <h3 className="text-3xl font-black text-white">{totalCourses || 0}</h3>
-          <span className="text-[11px] text-slate-500 mt-2 block">جاهزة للبث المباشر</span>
-        </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="p-4">الكورس</th>
+                  <th className="p-4">المُدرّس</th>
+                  <th className="p-4">الحالة (Status)</th>
+                  <th className="p-4">السعر</th>
+                  <th className="p-4">إجراءات المراجعة</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {courses.length === 0 ? (
+                  <tr><td colSpan={5} className="p-8 text-center text-slate-500 font-bold">لا توجد كورسات في المنصة حتى الآن.</td></tr>
+                ) : (
+                  courses.map((course) => (
+                    <tr key={course.id} className="hover:bg-slate-50 transition">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                            <BookOpen className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{course.title}</div>
+                            <div className="text-xs text-slate-500 font-mono mt-1">{course.slug}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 font-bold text-slate-700">
+                        {course.profiles?.full_name || 'غير محدد'}
+                      </td>
+                      <td className="p-4">
+                        {course.status === 'approved' && <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-max"><CheckCircle className="w-3 h-3"/> معتمد ومنشور</span>}
+                        {course.status === 'pending' && <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-max"><AlertTriangle className="w-3 h-3"/> قيد المراجعة</span>}
+                        {(!course.status || course.status === 'draft') && <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold w-max">مسودة (لم يطلب النشر)</span>}
+                        {course.status === 'rejected' && <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-max"><XCircle className="w-3 h-3"/> مرفوض</span>}
+                      </td>
+                      <td className="p-4 font-bold text-slate-900">${course.price}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Link href={`/learn/${course.slug}`} target="_blank" className="p-2 text-slate-500 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded-lg transition" title="معاينة الكورس">
+                            <Video className="w-4 h-4" />
+                          </Link>
+                          
+                          {course.status !== 'approved' && (
+                            <button 
+                              onClick={() => handleUpdateStatus(course.id, 'approved')}
+                              disabled={actionLoading === course.id}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition disabled:opacity-50"
+                            >
+                              {actionLoading === course.id ? 'جاري...' : 'موافقة ونشر'}
+                            </button>
+                          )}
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-slate-400 font-medium">نموذج المعلم الذكي</span>
-            <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-              <BrainCircuit size={18} />
-            </div>
+                          {course.status === 'approved' && (
+                            <button 
+                              onClick={() => handleUpdateStatus(course.id, 'rejected')}
+                              disabled={actionLoading === course.id}
+                              className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold rounded-lg transition disabled:opacity-50"
+                            >
+                              {actionLoading === course.id ? 'جاري...' : 'إيقاف النشر'}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-          <h3 className="text-xl font-bold text-white">Gemini 1.5 Flash</h3>
-          <span className="text-[11px] text-purple-400 mt-2 block">معدل الاستجابة فائق السرعة</span>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-slate-400 font-medium">حالة السيرفرات</span>
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <Activity size={18} />
-            </div>
-          </div>
-          <h3 className="text-xl font-bold text-emerald-400">تشغيل مستقر 100%</h3>
-          <span className="text-[11px] text-slate-500 mt-2 block">Vercel & Supabase Sync</span>
         </div>
       </div>
-
-      {/* جدول إدارة الدورات التدريبية */}
-      <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-bold text-white">مكتبة الكورسات (CMS)</h2>
-            <p className="text-xs text-slate-400">إدارة مسارات التعليم وحالة نشر المحتوى للطلاب</p>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
-              <tr>
-                <th className="p-4">عنوان الكورس</th>
-                <th className="p-4">المعرف (Slug)</th>
-                <th className="p-4">السعر</th>
-                <th className="p-4">الحالة</th>
-                <th className="p-4 text-left">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {courses?.map((c: any) => (
-                <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="p-4 font-bold text-white">{c.title}</td>
-                  <td className="p-4 text-slate-400 font-mono">{c.slug}</td>
-                  <td className="p-4 text-emerald-400 font-bold">${c.price || '0.00'}</td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${c.is_published ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400'}`}>
-                      {c.is_published ? 'منشور للطلاب' : 'مسودة'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-left">
-                    <Link
-                      href={`/learn/${c.slug}`}
-                      className="inline-flex items-center gap-1 text-[#00a88f] hover:underline font-bold"
-                    >
-                      فتح المشغل <ArrowUpRight size={14} />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
     </div>
   );
 }
