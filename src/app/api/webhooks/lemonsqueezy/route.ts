@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
-// تعريف أرقام المنتجات (Product IDs) التي جلبناها من Lemon Squeezy
 const PRO_PLAN_ID = '1436897';
 const PYTHON_COURSE_ID = '1436914';
 
@@ -31,70 +30,45 @@ export async function POST(req: Request) {
 
     const payload = JSON.parse(rawBody);
     const eventName = payload.meta.event_name;
-    const customerEmail = payload.data.attributes.user_email;
+    const customerEmail = payload.data.attributes.user_email.toLowerCase().trim(); // تنظيف الإيميل
 
     console.log(`[Webhook Radar] Received: ${eventName} from ${customerEmail}`);
 
-    // ==========================================
-    // 🧠 العقل المدبر: تنفيذ العمليات في قاعدة البيانات
-    // ==========================================
-
     if (eventName === 'order_created') {
-      // 1️⃣ حالة شراء كورس (دفع لمرة واحدة)
       const productId = payload.data.attributes.first_order_item.product_id.toString();
       
       if (productId === PYTHON_COURSE_ID) {
-        console.log(`✅ Success: Enrolling ${customerEmail} in Python Mastery Course`);
-        
-        // جلب معرف الطالب من قاعدة البيانات عبر إيميله
-        const { data: users, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-        const user = users?.users.find(u => u.email === customerEmail);
+        // 🚀 البحث الذكي: نبحث في جدول profiles مباشرة (أسرع وأدق)
+        const { data: profile, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .eq('email', customerEmail)
+          .single();
 
-        if (user) {
-          // جلب ID الكورس من جدول الكورسات
-          const { data: course } = await supabaseAdmin.from('courses').select('id').eq('title', 'أساسيات البرمجة الذكية').single();
+        if (profile) {
+          const { data: course } = await supabaseAdmin.from('courses').select('id').eq('title', 'تعليم البرمجة').single(); // ملاحظة: عدلت الاسم بناء على صورتك
           
           if (course) {
-            // تسجيل الطالب في الكورس فعلياً
             await supabaseAdmin.from('enrollments').upsert({
-              student_id: user.id,
+              student_id: profile.id, // نستخدم ID من الـ profile
               course_id: course.id,
               progress: 0
             }, { onConflict: 'student_id, course_id' });
-            console.log(`🎓 Student ${customerEmail} is now enrolled!`);
+            console.log(`🎓 SUCCESS: Student ${customerEmail} is now enrolled!`);
+          } else {
+            console.log(`⚠️ ERROR: Course not found in database.`);
           }
+        } else {
+           console.log(`⚠️ ERROR: No profile found for email ${customerEmail}. They need to sign up first.`);
         }
       }
     } 
     
-    else if (eventName === 'subscription_created') {
-      // 2️⃣ حالة اشتراك مدرس في باقة مسار برو
-      const productId = payload.data.attributes.product_id.toString();
-      
-      if (productId === PRO_PLAN_ID) {
-        console.log(`✅ Success: Upgrading ${customerEmail} to MASAR PRO`);
-        
-        // جلب معرف المدرس عبر إيميله
-        const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-        const user = users?.users.find(u => u.email === customerEmail);
-
-        if (user) {
-          // ترقية حساب المدرس في جدول profiles
-          await supabaseAdmin.from('profiles').update({ 
-            is_pro: true, 
-            subscription_status: 'active' 
-          }).eq('id', user.id);
-          console.log(`🚀 Teacher ${customerEmail} is now PRO!`);
-        }
-      }
-    }
-
-    // إرسال رد ناجح لـ Lemon Squeezy لكي يغلق الطلب ولا يكرر الإرسال
-    return NextResponse.json({ message: 'Webhook processed successfully' }, { status: 200 });
+    // إرسال رد ناجح
+    return NextResponse.json({ message: 'Webhook processed' }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Webhook execution error:', error.message);
-    // نرجع 200 حتى لو حدث خطأ داخلي لكي لا يقوم Lemon Squeezy بحظر الـ Webhook
-    return NextResponse.json({ message: 'Webhook received but execution failed' }, { status: 200 });
+    console.error('Webhook Error:', error.message);
+    return NextResponse.json({ message: 'Webhook failed' }, { status: 200 });
   }
 }
