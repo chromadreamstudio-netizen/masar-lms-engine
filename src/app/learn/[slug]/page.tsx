@@ -46,7 +46,6 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
       setCourse(courseData);
 
       const checkEnrollment = async (retryCount = 0) => {
-        // 👈 تم التصحيح هنا أيضاً: نبحث بـ user_id وليس student_id
         const { data: enrollment } = await supabase
           .from('enrollments')
           .select('*')
@@ -177,10 +176,18 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
         <div className="flex-1 flex flex-col bg-[#000000] relative">
           {activeLesson ? (
             <div className="w-full h-full relative flex items-center justify-center">
-              <iframe 
-                src={`https://iframe.mediadelivery.net/embed/${process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || '12345'}/${activeLesson.video_url}?autoplay=true&loop=false&muted=false&preload=true&responsive=true`}
-                loading="lazy" style={{ border: 0, position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }} allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;" allowFullScreen={true}>
-              </iframe>
+              {/* 🚀 التحديث الأهم: حماية المشغل من الـ NULL واستخدام bunny_video_id */}
+              {activeLesson.bunny_video_id ? (
+                <iframe 
+                  src={`https://iframe.mediadelivery.net/embed/${process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID}/${activeLesson.bunny_video_id}?autoplay=true&loop=false&muted=false&preload=true&responsive=true`}
+                  loading="lazy" style={{ border: 0, position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }} allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;" allowFullScreen={true}>
+                </iframe>
+              ) : (
+                <div className="text-gray-500 font-bold flex flex-col items-center">
+                  <PlayCircle size={48} className="mb-4 opacity-50" />
+                  <p className="mt-4">لم يتم إضافة فيديو لهذا الدرس بعد.</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center flex-col text-gray-500">
