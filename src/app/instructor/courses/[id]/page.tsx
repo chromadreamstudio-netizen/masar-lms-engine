@@ -146,13 +146,22 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
       xhr.onload = async () => {
         if (xhr.status === 200 || xhr.status === 201) {
           const currentModule = modules.find(m => m.id === activeModuleId);
-          const { data: newLesson } = await supabase.from('lessons').insert([{ 
+          
+          // 🚀 التعديل الأهم: تغيير video_url إلى bunny_video_id لحفظ الـ ID الصحيح
+          const { data: newLesson, error: dbError } = await supabase.from('lessons').insert([{ 
             module_id: activeModuleId, 
             title: lessonTitle, 
             order_index: currentModule?.lessons?.length || 0,
-            video_url: resData.videoId, 
+            bunny_video_id: resData.videoId, 
             is_free_preview: false
           }]).select().single();
+
+          if (dbError) {
+             console.error("Database Insert Error:", dbError);
+             setIsUploading(false);
+             alert('نجح الرفع لـ Bunny، ولكن فشل الحفظ في قاعدة البيانات. تحقق من صحة الحقول.');
+             return;
+          }
 
           if (newLesson) {
             setModules(modules.map(mod => mod.id === activeModuleId ? { ...mod, lessons: [...mod.lessons, newLesson] } : mod));
@@ -165,7 +174,7 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
         }
       };
 
-      xhr.onerror = () => { setIsUploading(false); alert('حدث خطأ في الشبكة.'); };
+      xhr.onerror = () => { setIsUploading(false); alert('حدث خطأ في الشبكة أثناء الرفع.'); };
       xhr.open('PUT', `https://video.bunnycdn.com/library/${resData.libraryId}/videos/${resData.videoId}`);
       xhr.setRequestHeader('AccessKey', resData.uploadKey);
       xhr.send(selectedFile);
