@@ -13,6 +13,7 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [aiSettings, setAiSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false); // 👈 للتحقق من الشراء
   
   const [messages, setMessages] = useState<{sender: 'user'|'ai', text: string}[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -30,11 +31,13 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
       const resolvedParams = await params;
       const { data: { user } } = await supabase.auth.getUser();
       
+      // 1. إذا لم يكن مسجلاً للدخول، ارجعه لتسجيل الدخول
       if (!user) {
-        router.push('/login');
+        router.push(`/login?redirect=/learn/${resolvedParams.slug}`);
         return;
       }
 
+      // 2. جلب بيانات الكورس
       const { data: courseData } = await supabase.from('courses').select('*').eq('slug', resolvedParams.slug).single();
       if (!courseData) {
         router.push('/dashboard');
@@ -42,12 +45,17 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
       }
       setCourse(courseData);
 
+      // 3. التحقق الأهم: هل اشترى الكورس؟
       const { data: enrollment } = await supabase.from('enrollments').select('*').eq('student_id', user.id).eq('course_id', courseData.id).maybeSingle();
 
-      if (!enrollment && !courseData.is_published) {
-         router.push('/dashboard');
+      // إذا لم يشتري الكورس، ارجعه لصفحة البيع ليشتري
+      if (!enrollment) {
+         router.push(`/courses/${resolvedParams.slug}`);
          return;
       }
+
+      // إذا وصل هنا، فهو طالب اشترى الكورس!
+      setIsAuthorized(true);
 
       const { data: aiData } = await supabase.from('course_ai_settings').select('*').eq('course_id', courseData.id).maybeSingle();
       setAiSettings(aiData);
@@ -105,14 +113,19 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
     }
   };
 
+  // شاشة التحميل
   if (isLoading) return <div className="min-h-screen bg-[#08090a] flex justify-center items-center"><Loader2 className="animate-spin text-mint w-12 h-12" /></div>;
 
+  // إذا لم يكن مصرحاً له (لم يشتري)، لا تعرض شيئاً (لأنه سيتم توجيهه لصفحة البيع)
+  if (!isAuthorized) return null;
+
+  // بقية التصميم الرائع الخاص بك كما هو!
   return (
     <div className="min-h-screen bg-[#08090a] text-white flex flex-col font-sans overflow-hidden" dir="rtl">
       <header className="h-16 bg-[#111111] border-b border-[#222222] flex items-center justify-between px-6 shrink-0 z-20">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 hover:text-white transition flex items-center gap-2 text-sm font-bold bg-[#222222] px-4 py-2 rounded-lg">
-            <ArrowRight size={16} /> العودة للوحة
+          <Link href={`/courses/${course?.slug}`} className="text-gray-400 hover:text-white transition flex items-center gap-2 text-sm font-bold bg-[#222222] px-4 py-2 rounded-lg">
+            <ArrowRight size={16} /> العودة لصفحة الكورس
           </Link>
           <div className="w-px h-6 bg-[#333333]"></div>
           <h1 className="font-bold text-sm md:text-base text-white truncate max-w-xs md:max-w-md">{course?.title}</h1>
