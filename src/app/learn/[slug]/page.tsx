@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, PlayCircle, Bot, Send, Loader2, Menu, X, Shield, Sparkles } from 'lucide-react';
+import { ArrowRight, PlayCircle, Bot, Send, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function LearningRoom({ params }: { params: { slug: string } }) {
   const router = useRouter();
@@ -12,8 +12,10 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
   const [modules, setModules] = useState<any[]>([]);
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [aiSettings, setAiSettings] = useState<any>(null);
+  
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false); // 👈 للتحقق من الشراء
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false); // حالة التحقق من الدفع
   
   const [messages, setMessages] = useState<{sender: 'user'|'ai', text: string}[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -31,13 +33,11 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
       const resolvedParams = await params;
       const { data: { user } } = await supabase.auth.getUser();
       
-      // 1. إذا لم يكن مسجلاً للدخول، ارجعه لتسجيل الدخول
       if (!user) {
         router.push(`/login?redirect=/learn/${resolvedParams.slug}`);
         return;
       }
 
-      // 2. جلب بيانات الكورس
       const { data: courseData } = await supabase.from('courses').select('*').eq('slug', resolvedParams.slug).single();
       if (!courseData) {
         router.push('/dashboard');
@@ -45,32 +45,51 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
       }
       setCourse(courseData);
 
-      // 3. التحقق الأهم: هل اشترى الكورس؟
-      const { data: enrollment } = await supabase.from('enrollments').select('*').eq('student_id', user.id).eq('course_id', courseData.id).maybeSingle();
+      // 🚀 الهندسة الجديدة: الانتظار الذكي (Polling) للـ Webhook
+      const checkEnrollment = async (retryCount = 0) => {
+        const { data: enrollment } = await supabase
+          .from('enrollments')
+          .select('*')
+          .eq('student_id', user.id)
+          .eq('course_id', courseData.id)
+          .maybeSingle();
 
-      // إذا لم يشتري الكورس، ارجعه لصفحة البيع ليشتري
-      if (!enrollment) {
-         router.push(`/courses/${resolvedParams.slug}`);
-         return;
-      }
+        if (enrollment) {
+          // تم العثور على الدفع بنجاح!
+          setIsAuthorized(true);
+          setIsVerifyingPayment(false);
+          
+          // جلب محتوى الكورس
+          const { data: aiData } = await supabase.from('course_ai_settings').select('*').eq('course_id', courseData.id).maybeSingle();
+          setAiSettings(aiData);
 
-      // إذا وصل هنا، فهو طالب اشترى الكورس!
-      setIsAuthorized(true);
+          const { data: modulesData } = await supabase.from('modules').select(`*, lessons (*)`).eq('course_id', courseData.id).order('order_index', { ascending: true });
+            
+          if (modulesData && modulesData.length > 0) {
+            const sortedModules = modulesData.map(mod => ({
+              ...mod,
+              lessons: mod.lessons.sort((a: any, b: any) => a.order_index - b.order_index)
+            }));
+            setModules(sortedModules);
+            if (sortedModules[0].lessons.length > 0) setActiveLesson(sortedModules[0].lessons[0]);
+          }
+          setIsLoading(false);
+        } else {
+          // إذا لم يجد الدفع، هل نحاول مرة أخرى؟
+          if (retryCount < 5) {
+            // ننتظر ثانيتين ونحاول مرة أخرى (المجموع 10 ثواني كحد أقصى)
+            setIsVerifyingPayment(true);
+            setTimeout(() => checkEnrollment(retryCount + 1), 2000);
+          } else {
+            // بعد 10 ثواني، إذا لم يصل الدفع، لا نطرده بل نعرض له رسالة
+            setIsLoading(false);
+            setIsVerifyingPayment(true);
+          }
+        }
+      };
 
-      const { data: aiData } = await supabase.from('course_ai_settings').select('*').eq('course_id', courseData.id).maybeSingle();
-      setAiSettings(aiData);
-
-      const { data: modulesData } = await supabase.from('modules').select(`*, lessons (*)`).eq('course_id', courseData.id).order('order_index', { ascending: true });
-        
-      if (modulesData && modulesData.length > 0) {
-        const sortedModules = modulesData.map(mod => ({
-          ...mod,
-          lessons: mod.lessons.sort((a: any, b: any) => a.order_index - b.order_index)
-        }));
-        setModules(sortedModules);
-        if (sortedModules[0].lessons.length > 0) setActiveLesson(sortedModules[0].lessons[0]);
-      }
-      setIsLoading(false);
+      // بدء عملية التحقق
+      checkEnrollment();
     };
 
     fetchLearningData();
@@ -113,13 +132,32 @@ export default function LearningRoom({ params }: { params: { slug: string } }) {
     }
   };
 
-  // شاشة التحميل
-  if (isLoading) return <div className="min-h-screen bg-[#08090a] flex justify-center items-center"><Loader2 className="animate-spin text-mint w-12 h-12" /></div>;
+  // شاشة التحميل العادية
+  if (isLoading && !isVerifyingPayment) {
+    return <div className="min-h-screen bg-[#08090a] flex justify-center items-center"><Loader2 className="animate-spin text-mint w-12 h-12" /></div>;
+  }
 
-  // إذا لم يكن مصرحاً له (لم يشتري)، لا تعرض شيئاً (لأنه سيتم توجيهه لصفحة البيع)
+  // شاشة التحقق من الدفع (إذا تأخر الـ Webhook)
+  if (isVerifyingPayment && !isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#08090a] flex flex-col justify-center items-center text-white" dir="rtl">
+        <Loader2 className="animate-spin text-mint w-16 h-16 mb-6" />
+        <h2 className="text-2xl font-bold mb-2">جاري تأكيد عملية الدفع...</h2>
+        <p className="text-gray-400 mb-8 max-w-md text-center">نحن نتحقق من استلام الدفعة من بوابة الدفع. عادة ما تستغرق هذه العملية ثواني معدودة. يرجى عدم إغلاق هذه الصفحة.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-[#222] hover:bg-[#333] text-white px-6 py-3 rounded-lg font-bold transition-colors border border-[#444]"
+        >
+          تحديث الصفحة الآن
+        </button>
+      </div>
+    );
+  }
+
+  // إذا لم يكن مصرحاً له (لن تحدث إلا إذا كان هناك خطأ حقيقي في الدفع)
   if (!isAuthorized) return null;
 
-  // بقية التصميم الرائع الخاص بك كما هو!
+  // بقية التصميم الرائع الخاص بك لمشغل الكورس
   return (
     <div className="min-h-screen bg-[#08090a] text-white flex flex-col font-sans overflow-hidden" dir="rtl">
       <header className="h-16 bg-[#111111] border-b border-[#222222] flex items-center justify-between px-6 shrink-0 z-20">
