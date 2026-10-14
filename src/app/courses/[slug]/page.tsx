@@ -12,6 +12,7 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
   const [modules, setModules] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null); // 👈 حالة جديدة لمعرفة المستخدم
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,9 +20,13 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
   );
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchCourseAndUser = async () => {
       const resolvedParams = await params;
       const slug = resolvedParams.slug;
+
+      // جلب بيانات المستخدم الحالي
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
 
       const { data: courseData } = await supabase
         .from('courses')
@@ -46,31 +51,27 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
       setIsLoading(false);
     };
 
-    fetchCourse();
+    fetchCourseAndUser();
   }, [params, router, supabase]);
 
   const totalLessons = modules?.reduce((acc, mod) => acc + (mod.lessons?.length || 0), 0) || 0;
 
-  // 🛠️ الدالة لمعالجة الدفع أو التسجيل المجاني
   const handleEnrollment = async () => {
     setIsEnrolling(true);
-    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    // 👈 إذا لم يكن مسجلاً، نرسله لصفحة الدخول مع رابط العودة
+    if (!currentUser) {
       router.push(`/login?redirect=/courses/${course?.slug}`);
       return;
     }
     
-    // التحقق المالي: هل الكورس مدفوع؟
     if (course.price && course.price > 0) {
-      // توجيه الطالب إلى رابط Lemon Squeezy الحي الخاص بالكورس المدفوع
       window.location.href = 'https://masar-platform.lemonsqueezy.com/checkout/buy/6f93a036-891f-46a5-90de-5bcec14e8f94';
       return;
     }
 
-    // إذا كان الكورس مجانياً، يتم التسجيل المباشر
     const { error } = await supabase.from('enrollments').upsert({
-      student_id: user.id,
+      student_id: currentUser.id,
       course_id: course.id,
       progress: 0
     }, { onConflict: 'student_id, course_id' });
@@ -96,18 +97,25 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
             <span className="text-mint text-xl font-black">MASAR</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link className="text-sm font-medium text-ink px-4 py-2 hover:bg-gray-50 rounded-md transition-colors" href="/login">
-              تسجيل الدخول
-            </Link>
-            <Link className="text-sm font-medium bg-ink text-white px-5 py-2 rounded-md hover:bg-gray-800 transition-colors shadow-sm" href="/login">
-              ابدأ مجاناً
-            </Link>
+            {!currentUser ? (
+              <>
+                <Link className="text-sm font-medium text-ink px-4 py-2 hover:bg-gray-50 rounded-md transition-colors" href="/login">
+                  تسجيل الدخول
+                </Link>
+                <Link className="text-sm font-medium bg-ink text-white px-5 py-2 rounded-md hover:bg-gray-800 transition-colors shadow-sm" href="/login">
+                  ابدأ مجاناً
+                </Link>
+              </>
+            ) : (
+              <span className="text-sm font-bold text-mint">مرحباً بعودتك!</span>
+            )}
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
         <div className="lg:col-span-2 space-y-12">
+          {/* ... بقية محتوى الكورس (العنوان، ماذا ستتعلم، الفهرس) كما هو ... */}
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-sm font-bold text-mint">
               <Link className="hover:underline" href="/courses">الكورسات</Link>
@@ -163,12 +171,16 @@ export default function CourseLandingPage({ params }: { params: { slug: string }
             <div className="p-6">
               <div className="text-4xl font-black text-ink mb-6">${course?.price || '0'}</div>
               <div className="space-y-3 mb-8">
+                {/* 👈 هنا الذكاء: تغيير النص بناءً على حالة تسجيل الدخول */}
                 <button 
                   onClick={handleEnrollment} 
                   disabled={isEnrolling} 
                   className="w-full bg-ink hover:bg-gray-800 text-white py-4 rounded-xl font-black text-base transition-all shadow-sm flex justify-center items-center gap-2 disabled:opacity-50"
                 >
-                  {isEnrolling ? <Loader2 className="w-5 h-5 animate-spin"/> : (course?.price > 0 ? 'شراء الكورس الآن' : 'الاشتراك مجاناً')}
+                  {isEnrolling ? <Loader2 className="w-5 h-5 animate-spin"/> : (
+                    !currentUser ? 'سجل دخولك أولاً للشراء' :
+                    (course?.price > 0 ? 'شراء الكورس الآن' : 'الاشتراك مجاناً')
+                  )}
                 </button>
               </div>
             </div>
