@@ -79,14 +79,23 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
   };
 
   const handleTogglePublish = async () => {
-    if (!course.is_published && modules.length === 0) {
-      alert('يجب إضافة فصل واحد على الأقل قبل النشر.');
+    if (course?.status !== 'approved' && modules.length === 0) {
+      alert('يجب إضافة فصل واحد على الأقل قبل طلب النشر.');
       return;
     }
     setIsPublishing(true);
-    const newPublishState = !course.is_published;
-    await supabase.from('courses').update({ is_published: newPublishState }).eq('id', course.id);
-    setCourse({ ...course, is_published: newPublishState });
+    
+    // إذا كان الكورس معتمداً بالفعل (approved) ويريد المدرس إيقافه
+    if (course?.status === 'approved') {
+       await supabase.from('courses').update({ status: 'draft', is_published: false }).eq('id', course.id);
+       setCourse({ ...course, status: 'draft', is_published: false });
+    } else {
+       // إذا كان مسودة (draft) ويريد طلب النشر
+       await supabase.from('courses').update({ status: 'pending' }).eq('id', course.id);
+       setCourse({ ...course, status: 'pending' });
+       alert('تم إرسال الكورس للإدارة للمراجعة. سيتم نشره فور الموافقة عليه.');
+    }
+    
     setIsPublishing(false);
   };
 
@@ -197,10 +206,12 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-black text-ink">{course?.title}</h1>
-              {course?.is_published ? (
+              {course?.status === 'approved' ? (
                 <span className="bg-mint/10 text-mint px-3 py-1 rounded-full text-xs font-bold border border-mint/20">منشور Live</span>
+              ) : course?.status === 'pending' ? (
+                <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200">قيد المراجعة</span>
               ) : (
-                <span className="bg-amber-100 text-amber-600 px-3 py-1 rounded-full text-xs font-bold border border-amber-200">مسودة</span>
+                <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold border border-slate-200">مسودة</span>
               )}
             </div>
           </div>
@@ -208,11 +219,18 @@ export default function CourseBuilderPage({ params }: { params: { id: string } }
           <div className="flex gap-3">
             <button 
               onClick={handleTogglePublish}
-              disabled={isPublishing}
-              className={`px-6 py-3 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-sm disabled:opacity-50 ${course?.is_published ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-ink text-white hover:bg-gray-800'}`}
+              disabled={isPublishing || course?.status === 'pending'}
+              className={`px-6 py-3 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-sm disabled:opacity-50 
+                ${course?.status === 'approved' ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 
+                  course?.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed' :
+                  'bg-ink text-white hover:bg-gray-800'}`}
             >
-              {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : (course?.is_published ? <ShieldOff size={16} /> : <Globe size={16} />)} 
-              {course?.is_published ? 'إيقاف النشر (Unpublish)' : 'نشر الكورس'}
+              {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+               (course?.status === 'approved' ? <ShieldOff size={16} /> : 
+                course?.status === 'pending' ? <Loader2 size={16} /> : <Globe size={16} />)} 
+              
+              {course?.status === 'approved' ? 'إيقاف النشر (تحويل لمسودة)' : 
+               course?.status === 'pending' ? 'قيد المراجعة من الإدارة...' : 'طلب الموافقة على النشر'}
             </button>
           </div>
         </div>
