@@ -73,11 +73,16 @@ export async function POST(req: Request) {
           return NextResponse.json({ message: 'Course not found' }, { status: 200 });
         }
         
-        // 4. تسجيل الطالب (الخطوة التي تم تصحيحها)
-        // أزلنا progress واستخدمنا user_id بدلاً من student_id
+        // 🚀 هذا هو الشرط الجديد الذي يرضي TypeScript ويمنع الخطأ
+        if (!profile || !profile.id) {
+           console.error(`[Webhook Fatal Error] Profile is undefined before enrollment`);
+           return NextResponse.json({ message: 'Profile undefined' }, { status: 500 });
+        }
+
+        // 4. تسجيل الطالب
         console.log(`[Webhook Radar] Inserting into enrollments for user_id: ${profile.id}`);
         const { error: insertError } = await supabaseAdmin.from('enrollments').insert({
-          user_id: profile.id,  // 👈 تم التصحيح هنا
+          user_id: profile.id, 
           course_id: course.id
         });
 
