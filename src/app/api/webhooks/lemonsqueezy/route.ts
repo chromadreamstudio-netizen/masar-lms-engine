@@ -8,7 +8,13 @@ export async function POST(req: Request) {
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY! 
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
 
     const rawBody = await req.text();
@@ -16,7 +22,6 @@ export async function POST(req: Request) {
     const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || ''; 
 
     if (!signature || !secret) {
-      console.error('[Webhook Error] Missing signature or secret');
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
     }
 
@@ -25,7 +30,6 @@ export async function POST(req: Request) {
     const signatureBuffer = Buffer.from(signature, 'utf8');
 
     if (!crypto.timingSafeEqual(digest, signatureBuffer)) {
-      console.error('[Webhook Error] Invalid signature match');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -37,23 +41,42 @@ export async function POST(req: Request) {
 
     if (eventName === 'order_created') {
       const productId = payload.data.attributes.first_order_item.product_id.toString();
-      console.log(`[Webhook Radar] Product ID bought: ${productId}`);
       
       if (productId === PYTHON_COURSE_ID) {
         
-        // 1. البحث عن الطالب
-        const { data: profile, error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
-          .eq('email', customerEmail)
-          .single();
+        // 🚀 الحل الجذري: البحث في جدول المستخدمين الأصلي (auth.users)
+        const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+        
+        const authUser = users.find(u => u.email === customerEmail);
 
-        if (profileError || !profile) {
-          console.error(`[Webhook Error] Student profile not found for email: ${customerEmail}`);
-          return NextResponse.json({ message: 'Profile not found' }, { status: 200 });
+        if (!authUser) {
+           console.error(`[Webhook Error] User not found in auth system for email: ${customerEmail}`);
+           return NextResponse.json({ message: 'User must sign up first' }, { status: 200 });
         }
 
-        // 2. البحث عن الكورس بالـ Slug (الطريقة الهندسية الصحيحة والآمنة)
+        // التحقق من وجود Profile، وإنشائه إذا لم يكن موجوداً
+        let { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .eq('id', authUser.id)
+          .single();
+
+        if (!profile) {
+            console.log(`[Webhook Fix] Profile missing. Creating profile for ${customerEmail}...`);
+            const { data: newProfile, error: profileInsertError } = await supabaseAdmin
+              .from('profiles')
+              .insert({ id: authUser.id, full_name: 'طالب مسار', role: 'student', email: customerEmail }) // أضفت الإيميل هنا للاحتياط
+              .select('id')
+              .single();
+              
+            if (profileInsertError) {
+                console.error(`[Webhook Error] Could not create profile:`, profileInsertError);
+                return NextResponse.json({ message: 'Failed to create profile' }, { status: 500 });
+            }
+            profile = newProfile;
+        }
+
+        // البحث عن الكورس
         const { data: course, error: courseError } = await supabaseAdmin
           .from('courses')
           .select('id')
@@ -61,11 +84,11 @@ export async function POST(req: Request) {
           .single();
 
         if (courseError || !course) {
-          console.error(`[Webhook Error] Course with slug 'ai-programming' not found in database!`);
+          console.error(`[Webhook Error] Course not found!`);
           return NextResponse.json({ message: 'Course not found' }, { status: 200 });
         }
 
-        // 3. تسجيل الطالب في الكورس
+        // تسجيل الطالب
         const { error: insertError } = await supabaseAdmin.from('enrollments').upsert({
           student_id: profile.id,
           course_id: course.id,
@@ -73,11 +96,11 @@ export async function POST(req: Request) {
         }, { onConflict: 'student_id, course_id' });
 
         if (insertError) {
-          console.error(`[Webhook Error] Failed to insert enrollment:`, insertError);
+          console.error(`[Webhook Error] Failed to enroll:`, insertError);
           return NextResponse.json({ message: 'Enrollment failed' }, { status: 500 });
         }
 
-        console.log(`✅ [Webhook Success] Student ${customerEmail} enrolled successfully in course!`);
+        console.log(`✅ [Webhook Success] Student enrolled successfully!`);
       }
     } 
     
