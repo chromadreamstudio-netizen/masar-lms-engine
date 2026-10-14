@@ -33,7 +33,7 @@ export default function GlobalPlatformHome() {
       const { data } = await supabase
         .from('courses')
         .select('id, title, slug, description, price, profiles(full_name)')
-        .eq('is_published', true)
+        .eq('status', 'approved') // 🚀 تم التحديث للعمل مع نظام Super Admin الجديد
         .order('created_at', { ascending: false })
         .limit(6);
       
@@ -70,11 +70,10 @@ export default function GlobalPlatformHome() {
               <Link href="/courses" className="hover:text-mint transition-colors">تصفح الكورسات</Link>
               <Link href="#features" className="hover:text-mint transition-colors">المميزات السحرية</Link>
               
-              <Link href="/pricing" className="text-mint hover:text-[#0a754f] transition-colors flex items-center gap-1">
-                 <Sparkles size={14} /> باقات المعلم الذكي
+              {/* 🚀 تم إزالة رابط الـ Pricing واستبداله برابط تشجيعي للمدرسين */}
+              <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="text-mint hover:text-[#0a754f] transition-colors flex items-center gap-1">
+                 <Sparkles size={14} /> انضم كمدرس (مجاناً)
               </Link>
-
-              <Link href={user ? "/instructor" : "/login?redirect=/instructor"} className="text-mint hover:text-[#0a754f] transition-colors">التدريس في مسار</Link>
             </nav>
           </div>
 
@@ -97,8 +96,8 @@ export default function GlobalPlatformHome() {
                 <Link href="/login?redirect=/dashboard" className="text-sm font-bold text-ink px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors">
                   دخول الطالب
                 </Link>
-                <Link href="/login?redirect=/dashboard" className="text-sm font-bold bg-mint text-white px-5 py-2 rounded-lg hover:bg-[#0a754f] transition-colors shadow-sm">
-                  دخول المدرس
+                <Link href="/login?redirect=/instructor" className="text-sm font-bold bg-mint text-white px-5 py-2 rounded-lg hover:bg-[#0a754f] transition-colors shadow-sm">
+                  انضم كمدرس
                 </Link>
               </div>
             )}
@@ -107,10 +106,9 @@ export default function GlobalPlatformHome() {
       </header>
 
       <main>
-        {/* 2. Hero Section (Mintlify Style with Actual Clouds Image) */}
+        {/* 2. Hero Section */}
         <section className="relative pt-32 pb-40 overflow-hidden bg-[#0d3b45] text-white">
           
-          {/* خلفية السحب الحقيقية */}
           <div className="absolute inset-0 z-0">
              <Image 
                src="/clouds-bg.png" 
@@ -119,7 +117,6 @@ export default function GlobalPlatformHome() {
                className="object-cover opacity-60 mix-blend-luminosity" 
                priority
              />
-             {/* تدرج لوني خفيف لدمج الصورة مع اللون الأبيض في الأسفل */}
              <div className="absolute inset-0 bg-gradient-to-b from-[#0d3b45]/80 via-[#10535e]/60 to-white"></div>
           </div>
 
@@ -152,8 +149,9 @@ export default function GlobalPlatformHome() {
                <Link href="/courses" className="text-sm font-bold bg-white text-ink px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors shadow-lg border border-gray-100">
                   استكشف الكورسات
                </Link>
-               <Link href="/pricing" className="text-sm font-bold bg-transparent border border-[#34d399]/30 text-white px-8 py-3 rounded-xl hover:bg-[#34d399]/10 transition-colors backdrop-blur-sm">
-                  باقات المدرسين
+               {/* 🚀 تم إزالة زر الأسعار واستبداله بزر التسجيل للمدرسين */}
+               <Link href="/login?redirect=/instructor" className="text-sm font-bold bg-transparent border border-[#34d399]/30 text-white px-8 py-3 rounded-xl hover:bg-[#34d399]/10 transition-colors backdrop-blur-sm flex items-center gap-2">
+                  <Sparkles size={16}/> ابدأ التدريس مجاناً
                </Link>
             </div>
           </div>
@@ -233,7 +231,7 @@ export default function GlobalPlatformHome() {
                 <div className="text-ink mb-6"><Sparkles size={36} strokeWidth={1.5} /></div>
                 <h3 className="text-xl font-bold text-ink mb-3">مساعد المدرس السحري</h3>
                 <p className="text-sm text-gray-600 font-medium leading-relaxed">
-                  أدوات ذكية للمحاضرين لتوليد الاختبارات، كتابة وصف الكورسات، وتحليل أداء الطلاب بضغطة زر واحدة.
+                  أدوات ذكية للمحاضرين لتوليد الاختبارات، كتابة وصف الكورسات، وتحليل أداء الطلاب بضغطة زر واحدة مجاناً.
                 </p>
               </div>
             </div>
@@ -286,7 +284,7 @@ export default function GlobalPlatformHome() {
               </div>
             ) : (
               <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl bg-gray-50 text-gray-500 font-bold">
-                لا توجد كورسات متاحة حالياً.
+                جاري إعداد كورسات حصرية. كن أول مدرس ينشر كورسه مجاناً!
               </div>
             )}
           </div>
@@ -310,6 +308,7 @@ export default function GlobalPlatformHome() {
               <ul className="space-y-3 text-sm font-medium text-gray-400 list-none p-0">
                 <li><Link href="/courses" className="hover:text-white transition-colors no-underline text-gray-400">تصفح الكورسات</Link></li>
                 <li><Link href="/login" className="hover:text-white transition-colors no-underline text-gray-400">تسجيل كطالب</Link></li>
+                <li><Link href="/login?redirect=/instructor" className="hover:text-white transition-colors no-underline text-gray-400">التدريس (مجاناً)</Link></li>
               </ul>
             </div>
             <div>
